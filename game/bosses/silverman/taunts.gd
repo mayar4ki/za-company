@@ -110,6 +110,12 @@ const LINES := {
 		{"text": "Jag skalar upp.\nI am scaling up.",
 			"voice": VOICE + "split_2.wav"},
 	],
+	# The glass ceiling, the line it was previewed with: said as he looks up,
+	# and the top floor of the ladder is the one place it is simply true.
+	"ceiling": [
+		{"text": "Det finns ett tak.\nThere is a ceiling.",
+			"voice": VOICE + "ceiling_1.wav"},
+	],
 
 	# The ladder, announced. One line each for the same reason `concede` has
 	# one: there is no second thing to say when a phase arrives, and the name

@@ -512,6 +512,11 @@ generator, and what each one owns.
                                        `game/player/src/sfx/` for free. ONE set
                                        for all ten characters, because they
                                        share one body
+- `game/bosses/silverman/sfx/*.wav` <- tools/sfx/make.py bosses, the same
+                                       pipeline again: the recipe is
+                                       `tools/sfx/bosses.py`, the untouched
+                                       exports `game/bosses/<id>/src/sfx/`.
+                                       Ahmed's hand-cut sounds are not in it
 - `ui/sfx/*.wav`                     <- tools/sfx/ui.py, and it is the ONE sound
                                        in the game that is generated the way
                                        the tilesets are: three tones and an

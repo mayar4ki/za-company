@@ -821,7 +821,7 @@ unlocks.
   walks into SILVERMAN'S OFFICE, and the man waiting there does not introduce
   himself.
   **He talks, and he says everything twice** - Swedish, then the same thing in
-  English. Twenty lines across nine cues in `silverman/taunts.gd`, voiced by a
+  English. Twenty-one lines across ten cues in `silverman/taunts.gd`, voiced by a
   Swedish voice reading both halves in one take. He is the gracious one: he
   compliments you for arriving, thanks you for hitting him, and there is not
   one insult in the file. Two cues are his own, `meeting` and `review`, said as

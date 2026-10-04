@@ -86,9 +86,10 @@ TAGS = {
     "hurt": _WARM,
     # He has the rest of the decade free and the taunt is him saying so.
     "taunt": _PATIENT,
-    # Two attacks and an interrupt: brief, and faintly entertained.
+    # Three attacks and an interrupt: brief, and faintly entertained.
     "glare": _DRY,
     "split": _DRY,
+    "ceiling": _DRY,
     "stagger": _DRY,
     # A phase arriving is a man calling a room to order.
     "meeting": _CHAIR,
@@ -100,10 +101,14 @@ TAGS = {
 SIMILARITY = 0.75
 SPEAKER_BOOST = True
 
-## (cue, text) -> the take that was approved for it. See the header. Nothing is
-## pinned yet: pin a take the moment it is listened to and kept, or a later
-## --force re-bills it and ships a read nobody chose.
-KEEP = {}
+## (cue, text) -> the take that was approved for it. See the header. Pin a take
+## the moment it is listened to and kept, or a later --force re-bills it and
+## ships a read nobody chose. The twenty lines cut before the glass ceiling are
+## still unpinned, so --force on this recipe re-records all of them.
+KEEP = {
+    ("ceiling", "Det finns ett tak.\nThere is a ceiling."):
+        "approved 2026-10-04: take 2 of 3 (3.66 s), auditioned over the live attack",
+}
 
 ## Transcript variants that are the transcriber, not the take. Empty, and that
 ## is a measured result rather than an omission: all twenty clips read back

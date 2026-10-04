@@ -243,7 +243,11 @@ room 3.0/s.
   wave lands). It frees itself once the last shard settles, and a concede
   before a wave lands cancels that wave and its shadows. His row is the glare's
   rise taken to the top of his height and held there, dimmed, while he looks
-  up. He has no line for it yet - see *What he says*.
+  up. He says "Det finns ett tak. / There is a ceiling." as he does, on the
+  attack's own cue, and the glass crashes as each wave lands: `ceiling_crash`,
+  the same clip both times, fired from `_ceiling_fall` whether or not a pane
+  found anybody - it is the first sound effect he owns (`tools/sfx/bosses.py`,
+  levelled at -17, between a boss's ordinary blow and Ahmed's slam).
 - **the cold room** (5.0/s inside r 34, third phase only) - an aura, not an
   attack, on the wraith's `drain()` path: it knows its own rate, and the grace
   window neither blocks it nor is opened by it. `chill.gd` draws the EDGE
@@ -339,7 +343,7 @@ from the label on it - `tools/voice/silverman.py` has the rest.
 
 ## What he says
 
-Twenty lines across nine cues in `silverman/taunts.gd`, cut by
+Twenty-one lines across ten cues in `silverman/taunts.gd`, cut by
 `tools/voice/cut.py silverman`. Two things about the set are decisions:
 
 - **He is gracious, and that is what makes him the third boss.** Ahmed is
@@ -357,12 +361,12 @@ Twenty lines across nine cues in `silverman/taunts.gd`, cut by
   and throw it away. The crossing gets no cue at all - it never runs through
   `_begin_attack`, and a man who announces his own dash is hurrying.
 
-The glass ceiling has no line yet. `_begin_attack` already says `ceiling` as he
-looks up, so a line arrives by being written into `taunts.gd` and cut - but
-test_barks.gd holds every line of his to a real clip on disk and names the
-attack cues it accepts, so the line, its clip and `"ceiling"` in that list go
-in together. The preview's was "Det finns ett tak. / There is a ceiling.";
-cutting it costs ElevenLabs credit.
+The glass ceiling's line is the one it was previewed with, "Det finns ett tak.
+/ There is a ceiling.", on the `[quiet, dry, amused]` the other two attacks
+use and on their 14 s cooldown. test_barks.gd holds every line of his to a
+real clip on disk and names the attack cues it accepts, which is why the line,
+its clip and `"ceiling"` in that list went in together. Its take was picked
+from three, auditioned over the live attack, and is pinned in `KEEP`.
 
 ## Online
 

@@ -429,14 +429,15 @@ func _bilingual() -> void:
 		% ("%d clips" % clips.size() if shared.is_empty() else str(shared)),
 		shared.is_empty())
 
-	# Every cue he has lines for is a cue something actually fires. `glare` and
-	# `split` are his attack ids, which the base says on the wind-up; `meeting`
+	# Every cue he has lines for is a cue something actually fires. `glare`,
+	# `split` and `ceiling` are his attack ids, which the base says on the
+	# wind-up; `meeting`
 	# and `review` are his own, said by silverman.gd as a phase arrives. A cue
 	# nobody fires is a line nobody hears, and it reads as written work.
 	var base := ["spot", "taunt", "hurt", "stagger", "concede"]
 	var his: Array = load("res://game/bosses/silverman/silverman.gd") \
 		.get_script_constant_map().get("PHASE_CUE", {}).values()
-	var attacks := ["glare", "split"]
+	var attacks := ["glare", "split", "ceiling"]
 	var reachable := base + his + attacks
 	var orphans := lines.keys().filter(func(c: String) -> bool: return not c in reachable)
 	_check("barks: and every cue he speaks on is one something fires (%s)"

@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://game/bosses/silverman/silverman.gd" id="1_silverman"]
 [ext_resource type="SpriteFrames" path="res://game/bosses/silverman/silverman_frames.tres" id="2_frames"]
@@ -7,6 +7,8 @@
 [ext_resource type="Script" path="res://game/bosses/silverman/chill.gd" id="5_chill"]
 [ext_resource type="Script" path="res://game/enemies/enemy_lines.gd" id="6_lines"]
 [ext_resource type="Script" path="res://game/bosses/silverman/prism.gd" id="7_prism"]
+[ext_resource type="Script" path="res://game/enemies/enemy_audio.gd" id="8_audio"]
+[ext_resource type="AudioStreamWAV" path="res://game/bosses/silverman/sfx/ceiling_crash.wav" id="9_ceiling_crash"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 6.0
@@ -112,7 +114,14 @@ cue_seconds = 12.0
 cooldowns = {
 "glare": 14.0,
 "split": 14.0,
+"ceiling": 14.0,
 "hurt": 11.0,
 "stagger": 10.0,
 "taunt": 10.0
+}
+
+[node name="Audio" type="Node2D" parent="."]
+script = ExtResource("8_audio")
+sounds = {
+"ceiling_crash": ExtResource("9_ceiling_crash")
 }

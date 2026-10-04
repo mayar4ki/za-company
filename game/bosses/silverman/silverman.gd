@@ -692,6 +692,10 @@ func _ceiling_fall(wave: int) -> void:
 					and rect.has_point(body.global_position):
 				body.call("take_damage", contact_damage)
 	shook.emit(CEILING_SHAKE[wave], SHAKE_SECONDS)
+	# The glass, on both waves and whether or not it found anybody: unlike a
+	# swing, a pane landing makes the same noise on an empty floor, and the
+	# picture shows it landing either way. The host's to make, and tell.
+	_sfx("ceiling_crash")
 
 
 # --- the cold room -----------------------------------------------------------

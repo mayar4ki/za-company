@@ -224,6 +224,27 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   was cut from, which is the one check that catches a delivery tag being read
   ALOUD instead of acted on - inaudible in a waveform, obvious in a fight.
 
+## Silverman's voice and his sound
+- Author: **generated with ElevenLabs** - his voice by text-to-speech (Eleven
+  v3), trimmed and levelled by `tools/voice/cut.py`; his one sound effect by
+  text-to-sound-effects, shaped by `tools/sfx/make.py`
+- License: per the ElevenLabs terms in force for the generating account -
+  **not** CC0, on the same footing as Ahmed's above. The voice is
+  `x0u3EW21dbrORJzOq1m9` (Adam Composer, a Swedish voice), and its own terms
+  are a separate question from the audio's: check them before the game ships.
+- Files: `game/bosses/silverman/sfx/voice/*.wav` - twenty-one lines, one per
+  thing he says in `game/bosses/silverman/taunts.gd`, each said twice in one
+  clip (Swedish, then English), named `<cue>_<n>.wav`; and
+  `game/bosses/silverman/sfx/ceiling_crash.wav`, the glass ceiling landing
+- The recipes are in the repo: `tools/voice/silverman.py` (a delivery tag per
+  cue) and `tools/sfx/bosses.py` (the crash's prompt, length and level). The
+  untouched exports are kept in `game/bosses/silverman/src/voice/` and
+  `src/sfx/`, so re-levelling costs no credits
+- Levelled like the others: the voice to -19 dBFS on the 75th percentile of
+  speech, the crash to -17 RMS. The glass ceiling's line and crash were each
+  picked from several takes auditioned over the live attack, and are pinned in
+  their recipes' `KEEP`
+
 ## HR's voice
 - Author: **generated with ElevenLabs** (text-to-speech, Eleven v3), then
   trimmed and levelled by `tools/voice/cut.py`, exactly as Ahmed's are
