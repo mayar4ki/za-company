@@ -129,9 +129,22 @@ rung of his own shine. Crossing a threshold also clears every attack cooldown,
 so an escalation ARRIVES rather than being something you notice a few seconds
 later - which is why the prism is the first thing he does in his last phase.
 
+**How hard he hits was retuned on the 2026-10-03 playtest**, which found the
+last fight in the building the easiest of the three. The damage went up by
+about half - every big blow (glare, prism, crossing) is now a heavy's 24, the copy
+18, the cold room 5 a second - but the cooldowns were the real fault. Each
+starts on the blow, so the glare's old 3.2 s left him hovering, doing nothing,
+for 2.5 of every 4 s you stood on him: 4 damage a second, against a player
+taking 28 off him. Now he glares every 2.4 s and the gap is his own recover
+again. **The wind-ups did not move**, on purpose: they are on the sheet, every
+effect is drawn against them, and a boss who hits harder and more often owes
+you the same time to read each blow coming. The old numbers, if it overshoots:
+glare 16 / 3.2 s, split 12 / 5 s, prism 16 / 6 s, crossing 18 / 2.4 s, cold
+room 3.0/s.
+
 **The five attacks, and what each is made of:**
 
-- **the glare** (16, 0.80/0.70) - the room whites out and the light leaves him
+- **the glare** (24, 0.80/0.70, 1.6 s cooldown) - the room whites out and the light leaves him
   as a CROSS: a 20 px lane along the floor the way he faces, out to 140, and
   two arms straight up and down, out to 80 (`GLARE_ARM`), all travelling
   through his recover on Ahmed's wave contract. One glare is still one hit,
@@ -153,14 +166,14 @@ later - which is why the prism is the first thing he does in his last phase.
   `BandDown` are moved with, because a sweep you are asked to step out of has
   to be a sweep whose edges you can see. `pixels.gd` holds the one-pixel
   drawing both glare.gd and prism.gd were previewed in.
-- **the split** (12, 0.60 wind-up) - he divides, and the copy walks at you while
+- **the split** (18, 0.60 wind-up, 3 s cooldown) - he divides, and the copy walks at you while
   he stands still. `copy.gd` draws the `ghost` row - the dulled body already on
   the sheet for the smear - so a copy of him is a copy of him by construction
   and costs **no art at all**. It is deliberately not an add: no group, no
   health, no bar, no collision, gone in 1.8 s. A boss floor's real adds arrive
   on `at_boss_fraction`, and two systems that put fighters in a room is one too
   many, so this one puts a THREAT in the room instead.
-- **the prism** (16, 1.00/1.90, third phase only, 6 s cooldown) - he draws the
+- **the prism** (24, 1.00/1.90, third phase only, 4 s cooldown) - he draws the
   city's light in off the window and sweeps it across the room as a white
   beam: 140 degrees in 1.4 s, opening 0.35 rad behind the player on the side
   it comes from, alternating direction every cast. Picked from a four-way
@@ -189,12 +202,12 @@ later - which is why the prism is the first thing he does in his last phase.
   `screen` (one white flash, on his layer 1 under the HUD). Its row is the
   glare's dim-and-rise with the impact frame HELD for the sweep, because the
   beam is his shine leaving him.
-- **the cold room** (3.0/s inside r 34, third phase only) - an aura, not an
+- **the cold room** (5.0/s inside r 34, third phase only) - an aura, not an
   attack, on the wraith's `drain()` path: it knows its own rate, and the grace
   window neither blocks it nor is opened by it. `chill.gd` draws the EDGE
   brightest, at exactly the radius the drain uses, because an aura with no
   telegraph is only fair if you can see how far it reaches.
-- **the crossing** (18) - above.
+- **the crossing** (24, 1.4 s cooldown) - above.
 
 **Every reach he owns used to point along x, so he had to be given one that
 does not** - and the crossfire's arms are now a second answer, at range. The band is a 20 px lane through his chest, the crossing only travels

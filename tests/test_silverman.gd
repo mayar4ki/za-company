@@ -22,11 +22,13 @@ extends "res://tests/helpers.gd"
 ##   asserted as a number rather than as "something happened".
 ## - **He always closes to `stop_distance`.** Left alone in CHASE he glides to
 ##   20 px and is then touching, so a check that needs him at range has to
-##   fire before he arrives - which is why the ranged glare below is set up
-##   73 frames before its cooldown expires and not the frame of it.
-## - **His cooldowns are long on purpose** (glare 3.2 s, split 5 s), so the
-##   sections are laid out around them. A phase change clears both, which is
-##   the other way to get an attack when you want one.
+##   fire before he arrives - which is why the ranged glare below is given
+##   1.2 s left on its cooldown as the section opens, not none.
+## - **His cooldowns are SHORT** (glare 1.6 s, split 3 s, the crossing 1.4 s),
+##   so a section that wants one attack HOLDS the others by setting their
+##   timers, rather than being laid out in the gaps between them - there are
+##   no gaps any more. A phase change clears every attack's, which is the
+##   other way to get one when you want it; it never clears the crossing's.
 ## - **Never set a position while he is crossing.** The dash drives him along a
 ##   curve off `_dash_from`, so moving him mid-flight fights it and lands him
 ##   somewhere neither of you chose - which is exactly how the split section
@@ -64,7 +66,7 @@ var _commit_at_interrupt := -1.0
 
 # The copy's blow, measured as a DELTA rather than against an absolute. He
 # crosses the room on his own schedule between the setup frames, and a
-# pass-through is 18 - so an absolute health here is really an assertion about
+# pass-through is 24 - so an absolute health here is really an assertion about
 # every blow that came before it, which is how this check first failed.
 var _before_copy := -1
 
@@ -142,9 +144,9 @@ func _tick(frame: int) -> void:
 				% [_prism_health, _prism_behind], _prism_behind == _prism_health)
 			_player().global_position = _prism_spot(_prism_from + _prism_span * 0.9)
 		elif into == 147:
-			_check("silverman: inside its arc the beam lands its 16, once (%s -> %s)"
+			_check("silverman: inside its arc the beam lands its 24, once (%s -> %s)"
 				% [_prism_behind, _player().get("health")],
-				_prism_behind - int(_player().get("health")) == 16)
+				_prism_behind - int(_player().get("health")) == 24)
 
 	if _watch_drops:
 		var health: int = _player().get("health")
@@ -221,12 +223,15 @@ func _tick(frame: int) -> void:
 			# HIM is what lands, which is the whole point of the fix.
 			_check("silverman: hugging him is off the band's line (%.0f px of 20)"
 				% _hug_offset, _hug_offset >= 20.0)
-			_check("silverman: and the glare still bursts off him for 16 (%s)"
-				% _player().get("health"), _player().get("health") == 84)
+			_check("silverman: and the glare still bursts off him for 24 (%s)"
+				% _player().get("health"), _player().get("health") == 76)
 		130:
 			# ---- THE CROSSING. 60 px is inside its own 72, which is the whole
 			# of the pass-through: he goes THROUGH rather than stopping short.
+			# The glare is held until the band section asks for it: it comes
+			# round in 1.6 s, and he lands from the crossing standing on you.
 			_player().global_position = Vector2(322, 140)
+			_sv.set("_glare_timer", 99.0)
 		175:
 			_check("silverman: out of reach, he crosses (started %d)"
 				% _dash_started, _dash_started > 0)
@@ -241,22 +246,26 @@ func _tick(frame: int) -> void:
 				% _moving_frames, _moving_frames >= 7 and _moving_frames <= 15)
 			# ONE blow, not three: all three travel beats can hit and a flag
 			# keeps the crossing to a single pass-through.
-			_check("silverman: he passes THROUGH you for 18, once (%s)"
-				% _player().get("health"), _player().get("health") == 66)
+			_check("silverman: he passes THROUGH you for 24, once (%s)"
+				% _player().get("health"), _player().get("health") == 52)
 			_check("silverman: and comes out the other side of you (%.0f)"
 				% _sv.global_position.x, _sv.global_position.x < 322.0)
 		200:
-			# ---- THE BAND. Set up well before the glare's 3.2 s is up, because
+			# ---- THE BAND. Given 1.2 s before the glare comes round, because
 			# he closes to stop_distance while he waits: 110 px now is ~64 px by
 			# the time it fires, which is still outside the burst's own reach so
-			# what lands here can only be the sweep.
+			# what lands here can only be the sweep. The crossing is held from
+			# here to the end: at 110 px he would otherwise cross first and land
+			# on you, and every section after this one wants him where it put him.
 			_sv.global_position = Vector2(382, 140)
 			_player().global_position = Vector2(272, 140)
+			_sv.set("_glare_timer", 1.2)
+			_sv.set("_dash_cool", 99.0)
 		350:
 			_check("silverman: at range he glares with no contact needed (%s)"
 				% str(_opened), _opened.size() >= 2 and _opened[1] == "glare")
-			_check("silverman: the band crosses the room and lands its 16 (%s)"
-				% _player().get("health"), _player().get("health") == 50)
+			_check("silverman: the band crosses the room and lands its 24 (%s)"
+				% _player().get("health"), _player().get("health") == 28)
 			_check("silverman: from outside the burst, so that was the sweep (%.0f px)"
 				% _sv.global_position.distance_to(_player().global_position),
 				_sv.global_position.distance_to(_player().global_position) > 27.0)
@@ -272,9 +281,12 @@ func _tick(frame: int) -> void:
 				float(_sv.get("herald")) > 0.0)
 			# 30 px off his line: the band is a 20 px lane and the crossing only
 			# moves along x, so neither reaches here - but the copy homes in two
-			# dimensions and will.
+			# dimensions and will. Three of his 24s have landed by now, so the
+			# player is topped up: the checks from here on are deltas, and a
+			# player who dies mid-section respawns at the door.
 			_sv.global_position = Vector2(332, 140)
 			_player().global_position = Vector2(272, 110)
+			_player().call("heal", 100)
 		460:
 			_check("silverman: in his second phase he divides (%s)" % str(_opened),
 				_opened.has("split"))
@@ -293,9 +305,9 @@ func _tick(frame: int) -> void:
 			# it is still on its way over here.
 			_before_copy = _player().get("health")
 		520:
-			_check("silverman: the copy walks you down for 12 (%s -> %s)"
+			_check("silverman: the copy walks you down for 18 (%s -> %s)"
 				% [_before_copy, _player().get("health")],
-				_before_copy - int(_player().get("health")) == 12)
+				_before_copy - int(_player().get("health")) == 18)
 		560:
 			_check("silverman: the copy is gone a second and a half later (%d)"
 				% _copies().size(), _copies().is_empty())
@@ -355,14 +367,16 @@ func _tick(frame: int) -> void:
 			_player().global_position = _sv.global_position + Vector2(0.0, 50.0)
 			_before_arm = _player().get("health")
 		1060:
-			_check("silverman: due south of him, the glare's down arm lands its 16 (%s -> %s)"
+			_check("silverman: due south of him, the glare's down arm lands its 24 (%s -> %s)"
 				% [_before_arm, _player().get("health")],
-				_before_arm - int(_player().get("health")) == 16)
+				_before_arm - int(_player().get("health")) == 24)
 			_check("silverman: and it was a glare that did it (%s)" % _opened.back(),
 				_opened.back() == "glare")
 			# The aura check below compares against health after this glare, not
-			# before it - the arm's 16 is not the aura's.
+			# before it - the arm's 24 is not the aura's. And his sight goes
+			# again, or the next glare - 1.6 s on - lands before he concedes.
 			_health_at_edge = _player().get("health")
+			_sv.set("sight_radius", 0.0)
 		1170:
 			_sv.call("take_damage", 500)
 			_check("silverman: at zero he concedes (%s)" % _sv.get("has_conceded"),

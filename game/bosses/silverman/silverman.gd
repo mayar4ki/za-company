@@ -60,8 +60,13 @@ const Copy := preload("res://game/bosses/silverman/copy.gd")
 ## MEDIUM numbers. The base scales an attack's damage when it is chosen; the
 ## crossing and the cold room are not on the cycle, so they scale their own
 ## (see `_ready`).
-const DAMAGE := {"glare": 16, "split": 12, "prism": 16}
-const DASH_DAMAGE := 18
+##
+## Raised by about half on the 2026-10-03 playtest, which found the last fight in
+## the building the easiest of the three (was glare 16, split 12, prism 16,
+## crossing 18). Every big blow he has is now a heavy's worth - 24 - and the
+## copy, the one that homes, stays the smaller number.
+const DAMAGE := {"glare": 24, "split": 18, "prism": 24}
+const DASH_DAMAGE := 24
 
 ## How much of a wind-up can still be interrupted, by phase, and how long an
 ## interrupt then locks him out for. This IS the ladder: the base has one dial
@@ -117,8 +122,9 @@ const DASH := [
 ## and past that he crosses and lands short - which is the old locomotion,
 ## still there, for a player who has backed off further than he can reach.
 @export var dash_range := 40.0
-## Long enough that the crossing is an event. He never hurries.
-@export var dash_cooldown := 2.4
+## Short enough that backing off buys a breath and not a rest: a kiting player
+## is crossed again before they have made their ground back. Was 2.4.
+@export var dash_cooldown := 1.4
 ## How close the crossing passes to count as passing THROUGH. His own body
 ## radius plus a little, so clipping his shoulder is a hit and standing a step
 ## off the line is not.
@@ -140,8 +146,16 @@ const GLARE_LANE_Y := -10.0
 ## A body is measured along an arm at its own centre, 4 px over its origin.
 const GLARE_BODY_Y := -4.0
 
-@export var glare_cooldown := 3.2
-@export var split_cooldown := 5.0
+## The cooldowns are what made him weak, more than the damage: each starts on
+## the blow, so the glare's old 3.2 s left him hovering, doing nothing, for 2.5
+## of every 4 s you stood on him. At 1.6 he glares every 2.4 s and the gap is
+## the length of his own recover again. Was glare 3.2, split 5.0, prism 6.0.
+##
+## His wind-ups did NOT get shorter, and that is deliberate: they are on the
+## sheet (poses.gd), every effect is drawn against them, and a boss who hits
+## harder and more often owes you the same time to read each blow coming.
+@export var glare_cooldown := 1.6
+@export var split_cooldown := 3.0
 ## Closer than this and the copy would arrive before it has walked anywhere,
 ## so he glares instead. The split is the mid-range answer.
 @export var split_min_distance := 34.0
@@ -172,12 +186,13 @@ const PRISM_BODY := Vector2(0.0, -5.0)
 ## hitbox all stop at one wall rather than three.
 const PRISM_SAMPLES := 48
 
-@export var prism_cooldown := 6.0
+@export var prism_cooldown := 4.0
 
 ## The cold room, third phase only. A drain, so it knows its own rate and is
 ## metered by nothing: the grace window neither blocks it nor is opened by it.
+## Was 3.0 a second.
 @export var chill_radius := 34.0
-@export var chill_per_second := 3.0
+@export var chill_per_second := 5.0
 
 ## World pixels of camera throw. The glare is the big one because it is the
 ## whole room; a phase arriving is worth more than either.
