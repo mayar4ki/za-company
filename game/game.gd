@@ -31,6 +31,9 @@ extends Node2D
 ## - **Down is a seat in the stands**: while this machine's player is down the
 ##   camera follows somebody still standing, and the attack button moves it on
 ##   to the next (_watch).
+## - **Anyone down can be revived** where they lie, by a teammate holding
+##   interact over them for a few seconds - as often as it takes, and the pool
+##   never hears of it (game/revive.gd).
 ##
 ## ## Online
 ##
@@ -95,6 +98,7 @@ const HostLeftType := preload("res://ui/host_left/host_left.gd")
 const Ping := preload("res://ui/ping.gd")
 const InputSource := preload("res://game/player/input_source.gd")
 const VirtualInput := preload("res://game/player/virtual_input.gd")
+const ReviveType := preload("res://game/revive.gd")
 
 @onready var _camera: Camera2D = $Camera2D
 @onready var _fade: ColorRect = $Transition/Fade
@@ -130,6 +134,8 @@ var _wait := 0
 ## Who this machine's camera follows while its own player is down - see
 ## _watch(). Null while they stand.
 var _watching: PlayerType = null
+## Picking somebody back up where they lie - see game/revive.gd.
+var _revive: ReviveType
 
 var _level: LevelType
 var _travelling := false
@@ -191,6 +197,10 @@ func _ready() -> void:
 	_hold.name = "PictureHold"
 	add_child(_hold)
 	_spawn_party()
+	_revive = ReviveType.new()
+	_revive.name = "Revive"
+	add_child(_revive)
+	_revive.setup(self, _sync)
 	# Pushed once here so the HUD never starts blank.
 	_hud.set_health(_local.health, PlayerType.MAX_HEALTH)
 	_hud.set_lives(lives, MAX_LIVES)
@@ -287,6 +297,17 @@ func _on_health_changed(health: int, max_health: int, body: PlayerType) -> void:
 ## `player` group holds - tests, and the day a scoreboard lists them.
 func party() -> Array[PlayerType]:
 	return _players
+
+
+## This machine's player - for game/revive.gd, which puts the E over the body it
+## could revive.
+func local_player() -> PlayerType:
+	return _local
+
+
+## Whether the party is on its way through a door, frozen under the fade.
+func is_travelling() -> bool:
+	return _travelling
 
 
 ## The floor in play now, for game/sync/, which keeps it in step.
@@ -547,8 +568,29 @@ func _get_up(body: PlayerType, wait: int) -> void:
 func _stand_up(body: PlayerType, at: Vector2) -> void:
 	body.global_position = at
 	body.revive()
+	_revive.clear(body)
 	_hud.set_member_down(_others.find(body), false)
 	_sync.stood_up(body, at)
+
+
+## Up where it lay, revived by `by` (game/revive.gd) - the host's call. The
+## wait at the door it may have been on is overtaken, exactly as a door
+## overtakes one: it does nothing when it runs out.
+func revived(body: PlayerType, by: PlayerType) -> void:
+	_getting_up.erase(body)
+	var toward := by.global_position if by != null else body.global_position
+	_lift(body, toward)
+	_sync.revived(body, toward)
+
+
+## A revive's getting up, on whichever machine is drawing it.
+func _lift(body: PlayerType, toward: Vector2) -> void:
+	body.get_up(ReviveType.HEALTH, ReviveType.GRACE, toward)
+	_hud.set_member_down(_others.find(body), false)
+	_revive.stood(body)
+	# Mid-fade the party is frozen, and the fade lets everyone standing go.
+	if not _travelling:
+		body.set_physics_process(true)
 
 
 ## Where in the row across a spawn marker this body stands - see
@@ -607,6 +649,7 @@ func _enter_level(level_path: String, spawn: StringName, as_room := 0) -> void:
 	# building it adds every placed enemy through _on_node_added, and the last
 	# room's spent alert would otherwise be handed to all of them on arrival.
 	_room_alerted = false
+	_revive.new_room()
 	_level = (load(level_path) as PackedScene).instantiate()
 	add_child(_level)
 	move_child(_level, 0)
@@ -860,7 +903,9 @@ func _watch() -> void:
 		_watching = nearest
 	elif standing.size() > 1 and _local.input_source.attack_pressed():
 		_watching = standing[(standing.find(_watching) + 1) % standing.size()]
-	_hud.set_watching(String(_names.get(_watching, "")), standing.size() > 1)
+	var helper := _revive.reviver_of(_local)
+	_hud.set_watching(String(_names.get(_watching, "")), standing.size() > 1,
+		String(_names.get(helper, "")) if helper != null else "")
 
 
 ## Who the camera is following: this machine's player, or whoever _watch()
@@ -1002,6 +1047,18 @@ func net_up(body: PlayerType, at: Vector2) -> void:
 		body.set_physics_process(true)
 
 
+## The host's word on a revive's progress (game/revive.gd's header).
+func net_revive(body: PlayerType, progress: float, filling: bool, lost: bool) -> void:
+	_revive.heard(body, progress, filling, lost)
+
+
+## Up where it lay - the host's revive, played here.
+func net_revived(body: PlayerType, toward: Vector2) -> void:
+	if body.is_down():
+		_getting_up.erase(body)
+		_lift(body, toward)
+
+
 func net_over() -> void:
 	_game_over()
 
@@ -1043,6 +1100,7 @@ func net_left(body: PlayerType) -> void:
 	_names.erase(body)
 	_getting_up.erase(body)
 	_arrived_at.erase(body)
+	_revive.clear(body)
 	var names: Array[String] = []
 	for other in _others:
 		names.append(String(_names.get(other, "")))

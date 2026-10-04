@@ -464,7 +464,10 @@ generator, and what each one owns.
                                        character's idle pixels about AFTER
                                        its recolour, on every run, because
                                        the recolour reshapes (game/player/
-                                       CLAUDE.md's *The dodge*)
+                                       CLAUDE.md's *The dodge*); rows 27-28
+                                       (the fall and the rise) likewise,
+                                       from tools/revive_pose.gd after the
+                                       roll (*Picking somebody up*)
 - `game/enemies/*/*_frames.tres`    <- tools/build_enemies.gd, see below
 - `game/npcs/*/*_frames.tres`      <- tools/build_npcs.gd: seeds
                                        game/npcs/<id>/src/<id>.png ONCE from

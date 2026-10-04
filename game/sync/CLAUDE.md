@@ -187,6 +187,18 @@ Two did not:
 
 A new room also forgets the last room's steps (`Bodies.new_room()`), so a
 remote picture never glides across the room from where its body stood
-downstairs. And the export presets were found already carrying the plugin -
+downstairs.
+
+**A revive is counted on the host** (game/revive.gd, `WIRE` 5). Holding E
+over somebody is the reviver's own hands, so it travels the way a roll does:
+in the body's step, as the peer id of the body being revived (player.gd's
+`net_state`, index 9). The host fills each revive off the newest word, knocks
+a second off for a blow it lands, and says two things, both on the clock: a
+revive started or stopped filling or lost a second, with how full it is now
+(`_revive`), and somebody is up where they lay (`_revived`). A guest fills or
+empties its own copy between two words, so its ring runs smoothly and is put
+right at each one. And a body that is down keeps the fall THIS machine played
+(`knock_down`) rather than its owner's picture, which is a beat behind and
+would stand it back up. And the export presets were found already carrying the plugin -
 the DLL beside the exe, the framework in the .app - which release.yml now
 checks inside every build (tools/release/check_plugin.sh).

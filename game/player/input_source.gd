@@ -1,11 +1,12 @@
 extends RefCounted
-## A player's HANDS: the stick, the attack button and the dodge, nothing else. A
+## A player's HANDS: the stick, the attack button, the dodge and the interact key
+## held over somebody who is down, nothing else. A
 ## player asks this, never `Input`, and this one - the one every player gets
 ## unless it is handed another - answers off the keyboard exactly as player.gd
 ## used to read it itself.
 ##
 ## The seam is DESIGN.md's Multiplayer, M1. A second body in the same room
-## cannot also be driven by the one keyboard, so whatever answers these four
+## cannot also be driven by the one keyboard, so whatever answers these five
 ## questions can move a player: a test's synthesized hands
 ## (`virtual_input.gd`), and later the wire.
 ##
@@ -61,6 +62,13 @@ func attack_pressed() -> bool:
 ## nothing to hold.
 func dodge_pressed() -> bool:
 	return Input.is_action_just_pressed("dodge")
+
+
+## Whether the interact key is held - which, standing over a teammate who is
+## down, is a revive (game/revive.gd). HELD, unlike the dodge: a revive takes
+## seconds of it, and letting go is how you stop.
+func interact_held() -> bool:
+	return Input.is_action_pressed("interact")
 
 
 ## Once at the top of every physics frame, before anything is asked. Nothing to

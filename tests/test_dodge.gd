@@ -279,7 +279,7 @@ func _probe(frame: int, t: int) -> void:
 			var ns: Array = p.call("net_state")
 			_check("online: a rolling body's step says so (%d fields, %s, %s)"
 				% [ns.size(), str(ns[7]) if ns.size() > 8 else "-", str(ns[8]) if ns.size() > 8 else "-"],
-				ns.size() == 9 and ns[7] == p.get("_dodge_dir") and ns[7] != Vector2.ZERO
+				ns.size() >= 9 and ns[7] == p.get("_dodge_dir") and ns[7] != Vector2.ZERO
 				and ns[8] == true)
 			p.call("drain", 3)
 			_check("probe: a drain lands straight through a roll (%d)" % int(p.get("health")),
@@ -307,7 +307,7 @@ func _probe(frame: int, t: int) -> void:
 			not after.is_empty() and after.all(func(s: Array) -> bool: return s[1]))
 		var ns: Array = p.call("net_state")
 		_check("online: a standing body's step says it is not rolling",
-			ns.size() == 9 and ns[7] == Vector2.ZERO and ns[8] == false)
+			ns.size() >= 9 and ns[7] == Vector2.ZERO and ns[8] == false)
 		p.call("revive")
 	elif t == 60:
 		_next(frame)

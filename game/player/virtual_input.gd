@@ -15,6 +15,8 @@ extends "res://game/player/input_source.gd"
 
 ## Where the stick points. Longer than 1 is clamped, as a real stick's is.
 var stick := Vector2.ZERO
+## Whether the interact key is held: set and cleared by code, like the stick.
+var interact := false
 
 var _held := false
 var _owed := false
@@ -50,6 +52,10 @@ func dodge() -> void:
 
 func dodge_pressed() -> bool:
 	return _dodged_on == Engine.get_physics_frames()
+
+
+func interact_held() -> bool:
+	return interact
 
 
 func tick() -> void:

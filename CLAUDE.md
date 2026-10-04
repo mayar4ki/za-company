@@ -104,8 +104,10 @@ a body DOWN**, not a fade - out of the `player` group, which is how everything
 in the world already stops seeing it - and it gets up at the door 3 s later on
 the pool's life, or stays down with the pool empty, and the run ends when
 nobody is standing (while down, that machine's camera follows somebody still
-standing - `_watch()`, game/player/CLAUDE.md); **a door waits for everyone
-standing** and says "1/2"; and
+standing - `_watch()`, game/player/CLAUDE.md); **anyone down can be REVIVED**
+where they lie by a teammate holding E over them for 4 s - as often as it takes,
+up at 50 health, and the pool never hears of it (`game/revive.gd`); **a door
+waits for everyone standing** and says "1/2"; and
 **the room alert is anyone's**. The player reads an *input source* rather than
 `Input` (game/player/CLAUDE.md's *The hands*), which is how a second body is
 driven, and an enemy goes for the nearest player and sticks (`target()`,
@@ -230,6 +232,15 @@ idle body moved about (`tools/roll_pose.gd`), built from each character's
 RECOLOURED sheet at bake time, so they are in no PNG. Online a body's step says
 it is rolling and the host trusts it (`WIRE` 4). Picked from the Dodge Lab
 preview: game/player/CLAUDE.md's *The dodge*, tests/test_dodge.gd.
+
+**A body that is down LIES down, and a teammate can pick it up.** It falls
+(rows 27-28, `fall` and `rise`, side-on, from `tools/revive_pose.gd` on the
+roll's terms) and joins the `fallen` group; holding E within 16 px of it for 4
+seconds gets it up where it lay at 50 health - a green ring fills on the floor
+round it, green plus signs rise off it, and each blow on the one reviving knocks
+a second off. Never a life from the pool. The host counts it online (`WIRE` 5).
+Picked from the Revive Lab preview: game/player/CLAUDE.md's *Picking somebody
+up*, game/revive.gd.
 
 **The combo is three hits and the third is the ARC.** Swing 5, rising slash 7,
 then `attack3` - 12 to whatever the blade reaches, and lightning that jumps to

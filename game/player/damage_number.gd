@@ -52,7 +52,7 @@ const GLYPHS := {
 	"0": "111101101101111", "1": "010110010010111", "2": "111001111100111",
 	"3": "111001111001111", "4": "101101111001001", "5": "111100111001111",
 	"6": "111100111101111", "7": "111001001001001", "8": "111101111101111",
-	"9": "111101111001111", "-": "000000111000000",
+	"9": "111101111001111", "-": "000000111000000", "+": "000010111010000",
 }
 
 ## What it says. Set by `spawn()` and `add()`; read by tests.
@@ -93,6 +93,21 @@ static func spawn_dealt(body: Node2D, amount: int, ink: Color, edge: Color,
 	node.top_level = true
 	node.z_index = Z
 	body.get_parent().add_child(node)
+	node.global_position = (body.global_position + RISE_FROM).round()
+	return node
+
+
+## Health given back over `body` - a revive's +50 - in `ink` with a plus, and
+## otherwise exactly the player's own number: parented to the body, top-level.
+static func spawn_healed(body: Node2D, amount: int, ink: Color, edge: Color) -> Node2D:
+	var node: Node2D = (load("res://game/player/damage_number.gd") as GDScript).new()
+	node.colour = ink
+	node.outline = edge
+	node.prefix = "+"
+	node.add(amount)
+	node.top_level = true
+	node.z_index = Z
+	body.add_child(node)
 	node.global_position = (body.global_position + RISE_FROM).round()
 	return node
 

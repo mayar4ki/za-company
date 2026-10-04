@@ -32,7 +32,8 @@ const CAST_LAYOUT := {
 	"up": {"idle": 2, "walk": 3, "attack": 7, "attack2": 10,
 		"charge": 13, "heavy": 16, "wildfire": 19, "attack3": 22, "dodge": 25},
 	"side": {"idle": 4, "walk": 5, "attack": 8, "attack2": 11,
-		"charge": 14, "heavy": 17, "wildfire": 20, "attack3": 23, "dodge": 26},
+		"charge": 14, "heavy": 17, "wildfire": 20, "attack3": 23, "dodge": 26,
+		"fall": 27, "rise": 28},
 }
 const CAST_SPECS := {
 	"idle": {"frames": 1, "fps": 1.0, "loop": true},
@@ -45,6 +46,11 @@ const CAST_SPECS := {
 	"wildfire": {"frames": 4, "fps": 14.0, "loop": false},
 	# The roll: four frames over player.gd's DODGE_SECONDS (0.32), 0.08 s each.
 	"dodge": {"frames": 4, "fps": 12.5, "loop": false},
+	# Going down in company: 0.08 s a frame, so the body is flat by 0.16 s and
+	# holds its last frame - lying - for as long as it is down. Side-on only.
+	"fall": {"frames": 4, "fps": 12.5, "loop": false},
+	# Getting up from a revive: four frames over player.gd's RISE_SECONDS (0.36).
+	"rise": {"frames": 4, "fps": 4.0 / 0.36, "loop": false},
 }
 
 ## The one row set this generator SEEDS rather than merely reads. The arc's
@@ -63,6 +69,12 @@ const ArcPose := preload("res://tools/arc_pose.gd")
 ## for all ten. Redraw an idle frame and its roll follows on the next run.
 const RollPose := preload("res://tools/roll_pose.gd")
 
+## And the two after it, on the same terms: the fall and the getting-up (rows
+## 27-28, `fall` and `rise`, side-on only), the side idle body moved about by
+## tools/revive_pose.gd after the roll - the order the Revive Lab preview
+## built them in.
+const RevivePose := preload("res://tools/revive_pose.gd")
+
 
 func _initialize() -> void:
 	var failed := false
@@ -78,6 +90,7 @@ func _initialize() -> void:
 			quit(1)
 			return
 		sheet = RollPose.paint(sheet)
+		sheet = RevivePose.paint(sheet)
 		var out: String = entry["frames"]
 		var frames := Art.slice(sheet, CAST_LAYOUT, CAST_SPECS)
 		var err := ResourceSaver.save(frames, out)

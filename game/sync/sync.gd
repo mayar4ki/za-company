@@ -265,6 +265,20 @@ func stood_up(body: PlayerType, at: Vector2) -> void:
 		to_guests(&"_up", [now(), body.peer, at])
 
 
+## A revive started or stopped filling on the host, or lost a second to a blow
+## (game/revive.gd): how full it is now, and whether it is filling. A guest
+## fills or empties its own copy between two of these.
+func revive_changed(body: PlayerType, progress: float, filling: bool, lost: bool) -> void:
+	if active and is_host():
+		to_guests(&"_revive", [now(), body.peer, progress, filling, lost])
+
+
+## Up where it lay, from a revive, turned towards `toward`.
+func revived(body: PlayerType, toward: Vector2) -> void:
+	if active and is_host():
+		to_guests(&"_revived", [now(), body.peer, toward])
+
+
 func over() -> void:
 	if active and is_host():
 		to_guests(&"_over", [now()])
@@ -355,6 +369,22 @@ func _up_now(peer: int, at: Vector2) -> void:
 	var body := body_of(peer)
 	if body != null:
 		_game.net_up(body, at)
+
+
+@rpc("authority", "call_remote", "reliable")
+func _revive(stamp: float, peer: int, progress: float, filling: bool, lost: bool) -> void:
+	later(stamp, func() -> void:
+		var body := body_of(peer)
+		if body != null:
+			_game.net_revive(body, progress, filling, lost))
+
+
+@rpc("authority", "call_remote", "reliable")
+func _revived(stamp: float, peer: int, toward: Vector2) -> void:
+	later(stamp, func() -> void:
+		var body := body_of(peer)
+		if body != null:
+			_game.net_revived(body, toward))
 
 
 @rpc("authority", "call_remote", "reliable")

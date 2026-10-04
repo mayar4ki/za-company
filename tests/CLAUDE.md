@@ -6,7 +6,7 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
 ## The suites
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Forty-three suites,
+  They drive the real game with synthesized input and exit 0/1. Forty-five suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu (HOST ONLINE and JOIN ONLINE, no MODE),
@@ -329,6 +329,20 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     getting up takes it straight back; and with nobody standing it stays on the
     last fight there was until somebody gets up. Its own suite because a third
     body would renumber every position test_party.gd checks.
+  - `test_revive.gd` - picking somebody up (game/revive.gd), a party of two
+    on one machine in the lobby, away from HR (whose prompt E also answers).
+    Down is lying down - `fall_side`, the solid darker tint, the `fallen`
+    group - with an E over the body for the player in reach; holding E roots
+    them, turns them to it and keeps their swing, and a green ring fills; half
+    full at two seconds, a blow on the one reviving knocks a second off with
+    the ring red for it, letting go runs it back down and the E comes back;
+    done is up where they lay at 50 with a grace window, turned to the one who
+    got them up, `rise` then on their own feet, a green +50, the pool still at
+    none - caught on the frame it happens, since what was left to fill decides
+    it; a door's wait overtakes a revive in progress and leaves nothing of it;
+    and the one down reads "ANAS IS GETTING YOU UP", back to WATCHING when Anas
+    lets go. It reads player.gd's constants with `load()` at run time: a
+    preload would compile player.gd before the autoloads it names exist.
   - `test_net.gd` - the `Net` autoload: a host and its guests in ONE process,
     each Net in a SubViewport with a MultiplayerAPI of its own, over ENet on
     localhost. Hosting opens a party of one; a guest's hello puts them in it,
@@ -472,6 +486,13 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     untouched - then dropped once the host gives up on the line (the suite
     shortens that with `za/test/drop_seconds`), said across the top, the pool
     untouched, and nothing sent down the dead line after.
+  - `test_coop_revive.gd` - the same two machines, a revive each way. The
+    host holds E over the guest's body: the host counts, the guest's machine
+    draws its own ring filling on the host's word (the probe's `revive`), and
+    the guest is up at 50 where it lay on both, with its hands. Then the guest
+    holds E over the host's: the host counts off the guest's step alone, a
+    blow the host lands on the guest knocks a second off on both machines, and
+    the host is up at 50 on both. The pool moves on neither.
 
 ## Writing a check
 

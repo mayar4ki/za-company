@@ -87,9 +87,19 @@ const MIN_SLOW_FACTOR := 0.2
 ## How a slowed character reads. Cold, and deliberately a tint rather than the
 ## blink the grace window owns, so being hurt and being slowed never look alike.
 const SLOW_TINT := Color(0.6, 0.75, 1.0)
-## How a body that is DOWN reads (knock_down): still there, so the party can
-## see where they fell, and plainly not in the fight.
-const DOWN_TINT := Color(0.55, 0.55, 0.65, 0.45)
+## How a body that is DOWN reads (knock_down): lying on the floor (the `fall`
+## rows), a little darker than it stands and still solid - a body a teammate can
+## find to revive, and plainly not in the fight. It used to be the standing
+## frame faded to almost nothing; the Revive Lab preview put it on the floor.
+const DOWN_TINT := Color(190 / 255.0, 190 / 255.0, 210 / 255.0)
+## How close a teammate stands to revive a body that is down, centre to centre
+## (game/revive.gd).
+const REVIVE_RANGE := 16.0
+## Getting up from a revive: rooted while the four frames of `rise` play.
+const RISE_SECONDS := 0.36
+## Every body that is down, which is how a player holding interact finds one to
+## revive - by group, like everything that reaches a body.
+const FALLEN_GROUP := &"fallen"
 ## How a body whose machine has gone silent reads (`away`): its own colours,
 ## frozen where it last was, see-through - somebody who is not here, rather
 ## than somebody who fell.
@@ -334,6 +344,13 @@ var _dust_clock := 0.0
 var _net_untouchable := false
 ## A remote body's: which way the roll its picture is in is going.
 var _drawn_roll := Vector2.ZERO
+## The teammate this body is reviving - holding interact over them - or null.
+## Asked of the hands every physics frame on the machine that moves the body;
+## a remote body's is its owner's word, as a peer id (`_net_reviving`).
+var _reviving: Node2D = null
+var _net_reviving := 0
+## Seconds left of getting up from a revive, rooted (get_up).
+var _rise := 0.0
 
 
 func _ready() -> void:
@@ -396,6 +413,15 @@ func _physics_process(delta: float) -> void:
 		_shove = _shove.move_toward(Vector2.ZERO,
 			MAX_SHOVE / SHOVE_SECONDS * delta)
 
+	# Getting up from a revive: rooted for the four frames of `rise`, which the
+	# sprite plays by itself, and standing at the end of them.
+	if _rise > 0.0:
+		_rise = maxf(_rise - delta, 0.0)
+		velocity = Vector2.ZERO
+		if _rise == 0.0:
+			_apply_animation("idle")
+		return
+
 	# Scripted movement short-circuits everything below: no stick, no attack,
 	# no combo. The timers above still run, because a blow landed during a
 	# conversation still has its grace window to spend.
@@ -404,6 +430,15 @@ func _physics_process(delta: float) -> void:
 		return
 
 	var direction := input_source.move()
+
+	# Holding interact over a teammate who is down is a revive (game/revive.gd):
+	# standing, turned to them, the stick and the attack button both ignored for
+	# as long as it is held. Letting go - or a roll, which takes the hands - is
+	# how it stops.
+	_reviving = _fallen_in_reach()
+	if _reviving != null:
+		direction = Vector2.ZERO
+		_face(_reviving.global_position - global_position)
 
 	if input_source.attack_held():
 		_hold += delta
@@ -420,7 +455,7 @@ func _physics_process(delta: float) -> void:
 		# the game eating the button - and swings as the roll ends.
 		if input_source.attack_pressed():
 			_dodge_swing = true
-	elif not _charging and input_source.attack_pressed():
+	elif not _charging and _reviving == null and input_source.attack_pressed():
 		if _attack == "":
 			_start_attack(_combo_next if _combo_grace > 0.0 else "attack")
 		else:
@@ -508,7 +543,8 @@ func net_state() -> Array:
 	return [global_position, _sprite.animation, _sprite.frame, _sprite.flip_h,
 		_sprite.modulate.to_rgba32(), _sprite.visible,
 		clampf(_charge / CHARGE_SECONDS, 0.0, 1.0) if _charging else 0.0,
-		_dodge_dir if _dodging() else Vector2.ZERO, _untouchable()]
+		_dodge_dir if _dodging() else Vector2.ZERO, _untouchable(),
+		int(_reviving.get("peer")) if _reviving != null else 0]
 
 
 ## The newest word on a remote body: where it IS. Only the body moves here - the
@@ -528,6 +564,9 @@ func apply_net_state(state: Array) -> void:
 	# The newest word, not the picture's: a blow on this body is decided on the
 	# host NOW, and whether it is mid-roll now is what its owner said last.
 	_net_untouchable = state.size() >= 9 and bool(state[8])
+	# And who it is reviving, on the same terms: the host counts a revive from
+	# the newest word (game/revive.gd).
+	_net_reviving = int(state[9]) if state.size() >= 10 else 0
 
 
 ## A remote body's picture: what its owner drew `DELAY` ago, standing at
@@ -542,6 +581,12 @@ func net_draw(state: Array, where: Vector2) -> void:
 	if state.size() < 7:
 		return
 	_sprite.position = where - global_position
+	# Down is decided on this machine (game.gd's net_down), and so is the picture
+	# of it: the fall knock_down started here, held on its last frame where it
+	# lies. A picture still a beat behind must neither stand the body back up nor
+	# play its owner's copy of the fall over this one.
+	if is_down():
+		return
 	var anim := StringName(state[1])
 	var frame := int(state[2])
 	if _sprite.animation != anim and _sprite.sprite_frames.has_animation(anim):
@@ -553,12 +598,7 @@ func net_draw(state: Array, where: Vector2) -> void:
 	if not _sprite.is_playing():
 		_sprite.play()
 	_sprite.flip_h = bool(state[3])
-	# Down is decided on this machine (game.gd's net_down), and a picture still
-	# a beat behind it must not stand the body back up.
-	if is_down():
-		_sprite.modulate = DOWN_TINT
-		_sprite.visible = true
-	elif away:
+	if away:
 		_sprite.modulate = AWAY_TINT
 		_sprite.visible = true
 	else:
@@ -626,6 +666,7 @@ func _drawn(move: String, roll := Vector2.ZERO) -> void:
 func take_control() -> void:
 	_scripted = true
 	_lead = null
+	_reviving = null
 	_drop_dodge()
 	_attack = ""
 	_buffered = ""
@@ -1412,23 +1453,56 @@ func revive() -> void:
 	_sprite.visible = true
 	_sprite.modulate = Color.WHITE
 	_down = false
+	remove_from_group(FALLEN_GROUP)
 	_belong()
 	health_changed.emit(health, MAX_HEALTH)
 
 
-## DOWN: a death in a party. The body stays where it fell, dimmed, while it
-## waits to get up - or for good, once the party's lives are spent - and
-## nothing in the world can see it, by way of the rule everything already
+## Up where it lies, from a teammate's revive (game/revive.gd): `amount` health
+## and `grace` seconds of the window, so the first blow in a crowd does not put
+## it straight back down - turned to whoever got it up, and rooted for
+## RISE_SECONDS while `rise` plays. The pool of lives never hears of it.
+func get_up(amount: int, grace: float, toward: Vector2) -> void:
+	health = clampi(amount, 1, MAX_HEALTH)
+	slow_factor = 1.0
+	slow_seconds = 0.0
+	_drop_hands()
+	_sprite.visible = true
+	_sprite.modulate = Color.WHITE
+	_down = false
+	remove_from_group(FALLEN_GROUP)
+	_belong()
+	_grace = grace
+	_facing = Facing.SIDE
+	_facing_left = toward.x < global_position.x
+	_sprite.flip_h = _facing_left
+	_sprite.speed_scale = 1.0
+	_sprite.play(&"rise_side")
+	_rise = RISE_SECONDS
+	health_changed.emit(health, MAX_HEALTH)
+
+
+## DOWN: a death in a party. The body falls and lies where it fell (the `fall`
+## rows, held on their last frame), darker, while it waits to get up - at the
+## door with a life from the pool, or where it lies when a teammate revives it -
+## and nothing in the world can see it, by way of the rule everything already
 ## keeps: the world reaches the player through the `player` group, so leaving
 ## the group is leaving the fight. Enemies stop picking it, hazards, drains and
 ## pickups stop touching it, a door stops waiting for it, and a head count stops
-## counting it - none of them had to learn what "down" is.
+## counting it - none of them had to learn what "down" is. It joins the
+## `fallen` group instead, which is how a teammate finds it to revive.
+##
+## The fall faces the way the picture did as it went down, so it is the same on
+## the owner's machine and on everybody else's - which keep this machine's fall
+## rather than drawing the owner's (net_draw).
 ##
 ## A SOLO death never comes here. With nobody else in the room the room fades
 ## over it and the body is put back at the door (game.gd), as it always was.
 func knock_down() -> void:
+	var facing_left := _sprite.flip_h
 	_down = true
 	_belong()
+	add_to_group(FALLEN_GROUP)
 	set_physics_process(false)
 	velocity = Vector2.ZERO
 	_shove_seconds = 0.0
@@ -1438,12 +1512,47 @@ func knock_down() -> void:
 	_drop_hands()
 	_sprite.visible = true
 	_sprite.modulate = DOWN_TINT
+	_sprite.flip_h = facing_left
+	_sprite.speed_scale = 1.0
+	_sprite.play(&"fall_side")
 
 
 ## Whether this body is down - see knock_down(). Not whether it is in the
 ## fight, which `away` decides too: that is the `player` group.
 func is_down() -> bool:
 	return _down
+
+
+## Who this body is reviving now, or null: its own hands' answer on the machine
+## that moves it, and its owner's word - a peer id - on every other. Only ever a
+## body that is down.
+func revive_target() -> Node2D:
+	if not remote:
+		return _reviving if is_instance_valid(_reviving) and _reviving.is_in_group(FALLEN_GROUP) else null
+	if _net_reviving == 0:
+		return null
+	for node in get_tree().get_nodes_in_group(FALLEN_GROUP):
+		if node != self and int(node.get("peer")) == _net_reviving:
+			return node
+	return null
+
+
+## The teammate who is down nearest this body within REVIVE_RANGE, while the
+## interact key is held and nothing else has the hands - or null.
+func _fallen_in_reach() -> Node2D:
+	if not input_source.interact_held() or _attack != "" or _charging or _dodging():
+		return null
+	var best: Node2D = null
+	var reach := REVIVE_RANGE
+	for node in get_tree().get_nodes_in_group(FALLEN_GROUP):
+		var body := node as Node2D
+		if body == null or body == self:
+			continue
+		var d := global_position.distance_to(body.global_position)
+		if d <= reach:
+			reach = d
+			best = body
+	return best
 
 
 ## Where this body is DRAWN: where it stands, plus however far its picture is
@@ -1492,6 +1601,8 @@ func _drop_hands() -> void:
 	_end_charge(false)
 	_combo_grace = 0.0
 	_swing_hits.clear()
+	_reviving = null
+	_rise = 0.0
 	_sfx_stop("charge")
 	_apply_animation("idle")
 

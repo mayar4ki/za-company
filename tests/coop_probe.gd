@@ -274,6 +274,18 @@ func _answer(what: String, args: Array) -> Variant:
 				return []
 			return [mine.call("scripted"), mine.is_physics_processing(), mine.call("is_down"),
 				mine.is_in_group("player")]
+		"revive":
+			# A body's revive (by peer) as this machine knows it: how full,
+			# whether it is filling, and how many rings are under the body.
+			var body := _body(sync, int(args[0]))
+			var revive: Node = game.get_node_or_null("Revive") if game != null else null
+			if body == null or revive == null:
+				return []
+			var rings := 0
+			for child in body.get_children():
+				if child.is_in_group(&"revive_ring") and not child.is_queued_for_deletion():
+					rings += 1
+			return [float(revive.call("progress", body)), bool(revive.call("filling", body)), rings]
 		"quit":
 			return true
 	return null

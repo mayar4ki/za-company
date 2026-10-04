@@ -903,6 +903,11 @@ one that FEELS best rather than the one that is safest.
   leaves that player down, watching, and the run ends when nobody is standing.
   Watching is literal: a player who is down has their camera on somebody still
   standing, and the attack button moves it on to the next.
+- **Anyone down can be revived.** A teammate stands over them and holds the
+  interact key for 4 seconds; they get up where they lie at 50% health. As often
+  as it takes, and it never touches the pool - so once the hearts are gone the
+  run is only over when nobody is left standing to pick anybody up. Each blow
+  on the one reviving costs a second, and letting go runs it back down.
 - **A door waits for the party.** It fires only when every STANDING player is
   in the doorway, and says so meanwhile ("1/2"); a downed player is carried
   through. Travel is the host's call, and every machine loads the floor it

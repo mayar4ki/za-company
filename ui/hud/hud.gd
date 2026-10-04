@@ -200,11 +200,14 @@ func notice_text() -> String:
 
 ## While this machine's player is down, whose fight the camera is following -
 ## and, when there is more than one teammate standing, the key that moves it on.
-## Empty takes the line down. game.gd asks every frame, so the strip is only
-## built again when the words change.
-func set_watching(who: String, more: bool) -> void:
+## While somebody is reviving them (`helper`), it says who instead. Empty takes
+## the line down. game.gd asks every frame, so the strip is only built again
+## when the words change.
+func set_watching(who: String, more: bool, helper := "") -> void:
 	var text := ""
-	if who != "":
+	if helper != "":
+		text = "%s IS GETTING YOU UP" % helper.to_upper()
+	elif who != "":
 		text = "WATCHING %s" % who.to_upper()
 		if more:
 			text += "   SPACE: NEXT"

@@ -143,16 +143,17 @@ the room frozen and visible behind the dim. MAIN MENU and QUIT are the only
 exits, and a new run builds a fresh party, so lives reset by construction.
 
 **In company a death stops nobody else's game**, so it is not a fade: the body
-goes DOWN where it fell (`knock_down()`), dimmed (`DOWN_TINT`), physics and
-collision off, and - the whole trick - OUT of the `player` group. Everything in
+goes DOWN where it fell (`knock_down()`) - it falls and LIES there (the
+`fall` rows, held on their last frame, in a darker solid `DOWN_TINT`) - physics
+and collision off, and - the whole trick - OUT of the `player` group. Everything in
 the world reaches the player through that group, so leaving it is leaving the
 fight: enemies stop picking the body, hazards, drains and pickups stop touching
 it, a door stops waiting for it and game/heads.gd stops counting it, and none
 of them had to learn what down means. The pool pays a life at once, and the
 body gets up at the room's `start` door `GET_UP_SECONDS` (3) later through the
 same `revive()` a solo respawn uses, which puts it back in the group. With the
-pool empty it stays down, and the run ends when nobody is standing and nobody
-is about to be. `is_down()` is the readout - a flag of its own, not the group,
+pool empty it stays down until a teammate revives it (*Picking somebody up*,
+below), and the run ends when nobody is standing and nobody is about to be. `is_down()` is the readout - a flag of its own, not the group,
 because online a body can be out of the fight without being down: AWAY, when
 the machine that moves it has gone silent (`away`, `set_away()`, game/sync/
 CLAUDE.md's M6). `_belong()` is the one rule for the group and the collision
@@ -168,7 +169,58 @@ nobody standing it stays put; and getting up takes it straight back. It
 follows the body's PICTURE (`drawn_at()`), which on a remote body glides a beat
 behind its newest step, so the camera glides with what is drawn rather than
 stepping with the wire. Nothing about it crosses the wire: every machine
-already draws every body. `tests/test_watch.gd` owns it.
+already draws every body. `tests/test_watch.gd` owns it. While somebody is
+reviving them, the line says who instead ("ANAS IS GETTING YOU UP").
+
+## Picking somebody up - the revive
+
+Option A, **Steady hands**, picked from the Revive Lab preview (2026-10-04)
+with the owner's three changes - green, plus signs, and the one reviving stays
+standing - and shipped as previewed. The rules are game/revive.gd's header;
+the shape of it:
+
+- **Anyone standing, on anyone down, as often as it takes, and the pool never
+  hears of it.** Stand within `REVIVE_RANGE` (16 px) and HOLD interact (E):
+  `_fallen_in_reach()` finds the nearest body in the `fallen` group, and while
+  it is held the player stands still turned to them, the stick and the attack
+  button ignored - `_reviving`, asked of the hands every physics frame, so
+  letting go, a roll, a conversation or a death ends it. Nothing new is drawn
+  for the one reviving: it is the idle frame.
+- **4 seconds of holding** (`SECONDS`), no faster with two. Letting go runs it
+  back down at the same speed; every blow the one reviving takes knocks 1
+  second off (`BLOW_COST`), decided where blows are, on `reached`.
+- **Up where they lay** (`get_up()`), at 50 health with a 1 second grace
+  window, turned to whoever got them up, rooted for `RISE_SECONDS` (0.36)
+  while `rise` plays. A wait at the door that was running is overtaken, as a
+  door overtakes one. With hearts left the door's 3 seconds usually win, so in
+  practice a revive is what the party does once the hearts are gone.
+- **On screen**, every one of them drawn as the page drew it, pixel stepping
+  and all: the green ring on the floor round the body (`revive_ring.gd`, dark
+  green whole, green filled with a pale head, red for a moment when a blow
+  knocks some off, dimmer while it runs down), green plus signs rising off the
+  filled part (`heal_plus.gd`), and when it closes a flare, a crown of plus
+  signs and a green +50 (`damage_number.gd`'s `spawn_healed()`); and over a
+  body this machine's player could revive, a small E (`revive_prompt.gd`).
+  The ring is `top_level` at the world's origin rather than at z -1 like the
+  charge ring: a top-level node at -1 drew UNDER the floor tiles, while at y 0
+  in the y-sorted room it draws after the floor and before anybody standing.
+- **The frames are in no sheet on disk**, on the dodge's terms: rows 27-28
+  (`fall_side`, `rise_side` - side-on only, flipped for the other way) are
+  the side idle body moved about by `tools/revive_pose.gd`, the preview's
+  generator ported line for line - lying is that frame turned a quarter
+  anticlockwise, and the crouch and the sitting ball are the roll's - built
+  after the roll from each RECOLOURED sheet. All ten were diffed against the
+  page's own frames and are identical.
+- **Online the host counts.** A body's step carries who it is reviving (a peer
+  id); the host fills from that, and tells the guests whenever a revive starts
+  or stops filling or loses a second (`revive_changed`) and when somebody is
+  up (`revived`) - `WIRE` 5. A guest fills its own copy between two words, so
+  its ring runs smoothly. A body that is down keeps THIS machine's fall rather
+  than its owner's picture (net_draw), so every machine shows it lying the
+  same way.
+
+`tests/test_revive.gd` owns it on one machine and `tests/test_coop_revive.gd`
+across two.
 
 The HUD (`ui/hud/`, instanced by game.tscn) is deliberately dumb: game.gd wires
 `health_changed` to it, pushes starting values and pushes the pool whenever it
