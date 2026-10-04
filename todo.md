@@ -20,7 +20,7 @@
     [x] Silverman's attacks hit harder - he is too weak now
     [ ] New attacks for the player after beating a boss
     [ ] A reward for fighting normal enemies, like extra health
-    [ ] Web build: the health bar sticks up to the top right
+    [x] Web build: the health bar sticks up to the top right
 
 # In-game updater: Windows and macOS
 
