@@ -21,6 +21,13 @@ func _initialize() -> void:
 
 	ProjectSettings.set_setting("display/window/size/viewport_width", 640)
 	ProjectSettings.set_setting("display/window/size/viewport_height", 360)
+	# A window that is not 16:9 gets black bars, never more world: "keep", not
+	# "expand". Everything on screen is laid out against the 640x360 frame - the
+	# HUD in its corner, the notice centred on 320 - and the web build's canvas
+	# is the browser window's shape, so under "expand" a tall page floated the
+	# health bar in the void above the room and a wide one pinned it to the wall.
+	ProjectSettings.set_setting("display/window/stretch/mode", "canvas_items")
+	ProjectSettings.set_setting("display/window/stretch/aspect", "keep")
 	# Launch windowed - F11 goes fullscreen (autoload/display.gd).
 	ProjectSettings.set_setting("display/window/size/mode", 0)
 

@@ -678,6 +678,11 @@ the thing to get right - it is the one players get wrong:
   2.5x some pixels land on three screen pixels and their neighbours on two, and
   the image crawls as the camera moves. Greys out in fullscreen rather than
   pretending to have an effect, while still remembering the choice.
+  **A window that is not 16:9 gets black bars, never more world** (stretch
+  aspect `keep`, from setup_project.gd): everything on screen is laid out
+  against the 640x360 frame, and the web build's canvas is the browser
+  window's shape - under `expand` a tall page floated the HUD in the void
+  above the room.
 - **ZOOM** - the one that changes *how much of the level is on screen*
   (`Display.ZOOMS`). At 1 a whole room fits and the camera sits still; above
   that the camera follows the player. Shown as a **percentage** - 100% / 125% /
