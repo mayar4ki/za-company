@@ -29,7 +29,7 @@ pitch, carried by air rather than by tone.
 
 Same bargain as every other body in the game: `game/player/player_audio.gd`
 holds id -> stream and player.gd fires names at it, so a cue that has no file
-is silence with no branch anywhere. Eight of them, and the split between the
+is silence with no branch anywhere. Nine of them, and the split between the
 first two is the one worth keeping straight:
 
 - `swing` / `swing2`   the two light attacks, fired when the swing STARTS.
@@ -52,6 +52,10 @@ first two is the one worth keeping straight:
                        for free, because `take_damage()` already is - a
                        crowded room cannot stack gasps.
 - `die`                health reaching zero.
+- `dodge`              the tumble roll, fired on the press - the frame the roll
+                       starts, and only a roll that DID start, so a press the
+                       cooldown refuses is silent. Never doubled: two rolls are
+                       at least 0.77 s apart and the clip is under 0.4 s.
 
 **`drain()` is deliberately silent**, and it is the one absence anybody is
 likely to call a bug. A drain runs every physics frame and knows its own rate
@@ -79,6 +83,7 @@ a crowd.
     boss ordinary blow   -19          (game/bosses/ahmed/CLAUDE.md, What he sounds like)
     enemy hit            -22          (enemies.py)
     swing2               -26          heard on every combo
+    dodge                -26          your own move, on the swings' shelf
     swing                -27          heard MORE than anything else in the
                                       game; 5 under the impact it precedes
     enemy telegraph      -29
@@ -132,6 +137,7 @@ LEVELS = {
 	"hit": -22.0,
 	"hurt": -19.0,
 	"die": -19.0,
+	"dodge": -26.0,
 }
 
 ## The tail of every prompt, and the bestiary's verbatim - a game sound is dry
@@ -264,16 +270,32 @@ CAST = {
 				"single unbroken event with no pauses and no second hit",
 			"seconds": 0.9,
 		},
+		# The tumble roll. Picked by ear in the Roll Sound Lab preview from
+		# eight takes - cloth, tumble, scuff and dive, two of each - played in
+		# the room beside the swings, the hits and the office boys' own cues.
+		#
+		# It is AIR with a shape to it, and the shape is the point: it rises
+		# into the roll and drops out of it, so it reads as a body going over
+		# rather than a blade going past - which is the one thing it must not
+		# be mistaken for, since a swing is also a whoosh and is heard more
+		# than anything else in the game. Capped at 0.4 s, a beat past the
+		# roll's 0.32, so it is over before the cooldown is.
+		"dodge": {
+			"prompt": "a body diving sideways, a very fast low airy swoosh "
+				"that rises then drops, soft and breathy, no voice, no metal, "
+				"nothing struck",
+			"seconds": 0.7, "limit": 0.4,
+		},
 	},
 }
 
 ## (id, cue) -> why it was kept. See the header.
 ##
-## All eight are pinned, and on SHAPE rather than on ears - `--report` is the
+## The first eight are pinned on SHAPE rather than on ears - `--report` is the
 ## half of a review a machine can do (make.py's note under it), and it is the
-## half that caught every sound in this batch that had to be re-rolled. They
+## half that caught every sound in that batch that had to be re-rolled. They
 ## still want listening to. Pinned anyway because the alternative is a stray
-## `--force` re-billing eight rolls that are already right, and because a
+## `--force` re-billing rolls that are already right, and because a
 ## re-shape is free either way: `--relevel` works THROUGH a pin, since it
 ## spends nothing and changes no performance. Delete an entry to deliberately
 ## buy a new one.
@@ -286,4 +308,5 @@ KEEP = {
 	("player", "hit"): "picked by ear from 4 - stylised crunch, gone immediately",
 	("player", "hurt"): "breathy, neutral, one syllable, no competing thud",
 	("player", "die"): "one event; two earlier rolls had a hole in the middle",
+	("player", "dodge"): "picked by ear from 8 in the Roll Sound Lab - dive, take 2",
 }

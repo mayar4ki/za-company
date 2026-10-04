@@ -48,14 +48,17 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     for pixel what tools/roll_pose.gd makes of the RECOLOURED sheet, and no
     roll in the source PNG; exactly 48 px in 20 frames the way the stick
     points, backwards with it at rest, the walk after, the cooldown and the
-    dust settling; a blow probed on EVERY frame of a roll, missing exactly
+    dust settling, and the `dodge` cue said once per roll and never for a
+    press the cooldown or the heavy refuses; a blow probed on EVERY frame of
+    a roll, missing exactly
     inside 0.04-0.26 and landing either side, while a drain and a slow land
     straight through; a swing and a charge cut short, never the heavy, a swing
     pressed mid-roll going off at its end, and a slow halving it. Then a real
     guard: seen landing his blow with no roll, then missing the same blow
     struck mid-roll against the wall, where the roll cannot carry the body out
     of reach. Last, the host trusting a teammate's word that it is rolling, and
-    the teammate's picture kicking up its dust. It reads player.gd's numbers
+    the teammate's picture kicking up its dust and making its sound. It reads
+    player.gd's numbers
     off the live body's script, never by preload - this file compiles before
     the autoloads exist, and player.gd names one.
   - `test_slam.gd` - the fourth archetype: that the ring draws the Touch

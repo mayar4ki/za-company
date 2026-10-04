@@ -104,10 +104,10 @@ Credited voluntarily; CC0 imposes no obligation to do so.
   summed to mono, levelled and loop-sealed by `tools/sfx/make.py`
 - License: per the ElevenLabs terms in force for the generating account -
   **not** CC0 like the art, on the same footing as every other sound here
-- Files: `game/player/sfx/*.wav` - eight. `swing` and `swing2` for the two
+- Files: `game/player/sfx/*.wav` - nine. `swing` and `swing2` for the two
   light attacks, `charge` for the stance, `heavy` and `wildfire` for the spin
   and the ring of fire it erupts into, `hit` for a blow that lands, `hurt` for
-  one taken, and `die`
+  one taken, `die`, and `dodge` for the tumble roll
 - **One set for all seven characters**, which is the cast's sheet rule applied
   to the other sense: they share one body and one animation set forever, so a
   swing cut once has to land on all of them. Its one consequence is designed

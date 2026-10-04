@@ -618,9 +618,9 @@ func net_draw(state: Array, where: Vector2) -> void:
 
 ## A remote body's picture going into another move: the moments its owner's
 ## machine had there, read off what it draws - the air of a swing, the heavy's
-## supernova, the charge's hum and its ring, a roll's dust. Not the stop, the
-## shake or the flash: those are the attacker's to feel, on the attacker's
-## screen. `roll` is the way a roll the picture goes into is heading.
+## supernova, the charge's hum and its ring, a roll's dust and its whoosh. Not
+## the stop, the shake or the flash: those are the attacker's to feel, on the
+## attacker's screen. `roll` is the way a roll the picture goes into is heading.
 func _drawn(move: String, roll := Vector2.ZERO) -> void:
 	if move == _drawn_move:
 		return
@@ -654,6 +654,7 @@ func _drawn(move: String, roll := Vector2.ZERO) -> void:
 			_drawn_roll = roll
 			_dust_clock = 0.0
 			_kick_dust(global_position + _sprite.position, roll)
+			_sfx("dodge")
 		_:
 			_sfx(ATTACK_SOUNDS.get(move, ""))
 
@@ -1087,8 +1088,8 @@ func _end_charge(fired: bool) -> void:
 ## a swing, a slash or an arc is dropped where it stands - what the blade had
 ## already hit stays hit - and a charge is dropped like letting go early.
 ##
-## It plays silent: a `dodge` cue is still to be cut (tools/sfx/player.py),
-## and a cue fired with no file behind it is what test_player_sfx.gd catches.
+## Its sound is said here, past every refusal, so it confirms a roll that
+## started and a press the cooldown swallowed stays silent.
 func _start_dodge(direction: Vector2) -> void:
 	if _dodging() or _dodge_cooldown > 0.0 or _attack == "heavy" or _attack == "wildfire":
 		return
@@ -1107,6 +1108,7 @@ func _start_dodge(direction: Vector2) -> void:
 	velocity = Vector2.ZERO
 	_apply_animation("dodge", true)
 	_kick_dust(global_position, _dodge_dir)
+	_sfx("dodge")
 
 
 ## One frame of a roll: the next stretch of a straight line at a steady speed,

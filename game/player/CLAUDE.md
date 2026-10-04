@@ -587,11 +587,15 @@ old; without the flag a guest would roll clear on their own screen and be hit
 on the host's. A teammate's picture going into a roll kicks up the same dust on
 every other screen (`_drawn`). It is why `WIRE` is 4.
 
-It plays silent for now. A `dodge` cue is still to be cut - an entry in
-tools/sfx/player.py, `make.py player`, the stream in player.tscn, a `_sfx`
-call in `_start_dodge()` and the name in test_player_sfx.gd's CUES - and a cue
-fired with no file behind it is what that suite exists to catch.
-`tests/test_dodge.gd` owns the rest.
+**It says so out loud**: `dodge`, a low airy swoosh that rises into the roll
+and drops out of it, picked by ear from eight takes in the Roll Sound Lab
+preview (https://claude.ai/artifact/PVD3jSotk9yhL4XX5EVcaX) and shipped as
+previewed. It fires at the end of `_start_dodge()`, past every refusal, so it
+confirms a roll that started and a press the cooldown swallowed is silent; a
+teammate's picture going into a roll says it too, from where they are. At -26
+RMS it sits on the swings' shelf - your own move, never louder than a blow -
+and at under 0.4 s it is over before the next roll can start, so it never cuts
+itself off. `tests/test_dodge.gd` owns the rest.
 
 ## Scripted control - when the world has the wheel
 
@@ -625,8 +629,9 @@ The player's sounds work exactly the way an enemy's do and for the same
 reason: `player.tscn` carries an `Audio` child (`player_audio.gd`) holding
 id -> stream, player.gd fires names at it through `_sfx` / `_sfx_loop` /
 `_sfx_fade` / `_sfx_stop`, and a name with no file behind it is silence with
-no branch anywhere. Eight cues - `swing`, `swing2`, `charge`, `heavy`,
-`wildfire`, `hit`, `hurt`, `die` - and a cue arrives by having the WAV.
+no branch anywhere. Nine cues - `swing`, `swing2`, `charge`, `heavy`,
+`wildfire`, `hit`, `hurt`, `die`, `dodge` - and a cue arrives by having the
+WAV.
 
 **One set for all ten characters.** That is the sheet rule from Characters
 above applied to the other sense, and it is permanent for the identical
@@ -711,6 +716,6 @@ than `ENEMIES`. The levels sit ABOVE the bosses and the enemies rather than
 under them, on the same arithmetic upside down: a room holds seven enemies and
 one player, so the sound that says YOU are losing must never be won by a crowd.
 `--relevel` re-shapes from `game/player/src/sfx/` and costs nothing; only a new
-performance costs credits, and all eight are pinned in `KEEP` so a stray
+performance costs credits, and all nine are pinned in `KEEP` so a stray
 `--force` cannot re-bill them. The prompts, the levels and the reasoning behind
 both are in that file.

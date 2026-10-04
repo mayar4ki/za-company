@@ -8,8 +8,9 @@ extends "res://tests/helpers.gd"
 ##   pixel for pixel what roll_pose.gd makes of their recoloured sheet - and the
 ##   source sheet holds no roll at all;
 ## - a roll goes the way the stick points, exactly DODGE_DISTANCE, runs on into
-##   the walk, leaves dust that settles, and cannot be pressed again inside its
-##   cooldown; with the stick at rest it goes backwards;
+##   the walk, leaves dust that settles, says `dodge` once as it starts, and
+##   cannot be pressed again inside its cooldown - a refused press saying
+##   nothing; with the stick at rest it goes backwards;
 ## - a blow probed on every frame of a roll misses exactly inside the
 ##   untouchable stretch and lands either side of it, while a drain and a slow
 ##   land straight through it;
@@ -19,7 +20,7 @@ extends "res://tests/helpers.gd"
 ##   cannot carry the body out of reach, misses - after the same guard was
 ##   seen landing one with no roll;
 ## - online, the host trusts a teammate's word that it is rolling, and the
-##   teammate's picture kicks up the same dust here.
+##   teammate's picture kicks up the same dust here and makes the same sound.
 ##
 ## Its own suite because every stage moves the player, and a roll that moves
 ## them is exactly what a duel suite's geometry must never be handed.
@@ -46,6 +47,7 @@ var _samples: Array = []
 var _guard: Node2D = null
 var _prog := 0.0
 var _health := 0
+var _said := 0
 
 
 func _tick(frame: int) -> void:
@@ -120,6 +122,13 @@ func _c(name: String) -> float:
 
 func _rolling() -> bool:
 	return float(_player().get("_dodge_t")) >= 0.0
+
+
+## How many times `body` has said `dodge` - player_audio's own count, kept
+## where the sound is started, because headless has no `playing`.
+func _said_dodge(body: Node) -> int:
+	var audio := body.get_node_or_null("Audio")
+	return 0 if audio == null else int(audio.call("plays", "dodge"))
 
 
 func _dust(parent: Node) -> int:
@@ -206,6 +215,7 @@ func _forward(frame: int, t: int) -> void:
 		_place(OPEN)
 	elif t == 4:
 		_x0 = _player().global_position.x
+		_said = _said_dodge(_player())
 		_key(KEY_D, true)
 		_tap(KEY_K, frame)
 	elif t == 5:
@@ -214,6 +224,8 @@ func _forward(frame: int, t: int) -> void:
 			_rolling() and _sprite().animation == "dodge_side" and not _sprite().flip_h)
 		_check("roll: kicking up dust behind it (%d puffs)" % _dust(_player().get_parent()),
 			_dust(_player().get_parent()) >= 2)
+		_check("roll: and says so, once (%d)" % (_said_dodge(_player()) - _said),
+			_said_dodge(_player()) - _said == 1)
 	elif t > 5 and _ended < 0 and not _rolling():
 		_ended = frame
 		var moved := _player().global_position.x - _x0
@@ -229,6 +241,8 @@ func _forward(frame: int, t: int) -> void:
 		_tap(KEY_K, frame)
 	elif _ended > 0 and frame == _ended + 7:
 		_check("roll: a press inside the cooldown does nothing", not _rolling())
+		_check("roll: and makes no sound (%d said)" % (_said_dodge(_player()) - _said),
+			_said_dodge(_player()) - _said == 1)
 	elif _ended > 0 and frame == _ended + 40:
 		_check("roll: and its dust has settled (%d)" % _dust(_player().get_parent()),
 			_dust(_player().get_parent()) == 0)
@@ -374,11 +388,14 @@ func _not_the_heavy(frame: int, t: int) -> void:
 		_key(KEY_SPACE, true)
 	elif t > 3 and not _flag and p.get("_attack") == "heavy":
 		_flag = true
+		_said = _said_dodge(p)
 		_tap(KEY_K, frame)
 		_ended = frame
 	elif _flag and frame == _ended + 1:
 		_check("heavy: no roll out of it (%s)" % p.get("_attack"),
 			not _rolling() and (p.get("_attack") == "heavy" or p.get("_attack") == "wildfire"))
+		_check("heavy: and no sound of one (%d)" % (_said_dodge(p) - _said),
+			_said_dodge(p) == _said)
 		_key(KEY_SPACE, false)
 	elif _flag and frame == _ended + 70:
 		_check("heavy: which plays out (%s)" % p.get("_attack"), p.get("_attack") == "")
@@ -493,6 +510,7 @@ func _teammate() -> void:
 	_check("online: and lands the blow once it says it is standing (%d)" % int(mate.get("health")),
 		int(mate.get("health")) == 90)
 	var before := _dust(_level())
+	var said := _said_dodge(mate)
 	mate.call("net_draw", rolling, at)
 	var kicked := _dust(_level()) - before
 	mate.call("net_draw", standing, at)
@@ -501,4 +519,6 @@ func _teammate() -> void:
 	# machine's own starts; then the one it stands up into.
 	_check("online: a teammate's picture rolling kicks up its dust here (%d, then %d)"
 		% [kicked, stood], kicked == 3 and stood == 1)
+	_check("online: and its roll is heard here, once (%d)" % (_said_dodge(mate) - said),
+		_said_dodge(mate) - said == 1)
 	mate.queue_free()

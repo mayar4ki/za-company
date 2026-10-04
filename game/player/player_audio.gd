@@ -22,9 +22,9 @@ extends Node
 ## What it keeps is the bargain, which is the part worth having twice: the
 ## scene fills `sounds` with id -> stream and NOTHING else happens. player.gd
 ## already calls `swing`, `swing2`, `charge`, `heavy`, `wildfire`, `hit`,
-## `hurt` and `die` on whichever of them exist, so a cue arrives by owning a
-## file and one with no file is silence with no branch anywhere - which is
-## also what a fresh checkout looks like before the WAVs are imported.
+## `hurt`, `die` and `dodge` on whichever of them exist, so a cue arrives by
+## owning a file and one with no file is silence with no branch anywhere -
+## which is also what a fresh checkout looks like before the WAVs are imported.
 ##
 ## One player per id, built once: an id retriggered mid-play restarts rather
 ## than stacking, which is exactly what a swing on a mashed combo wants.

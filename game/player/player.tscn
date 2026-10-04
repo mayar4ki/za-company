@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://game/player/player.gd" id="1_player"]
 [ext_resource type="SpriteFrames" path="res://game/player/characters/mayar_frames.tres" id="2_frames"]
@@ -11,6 +11,7 @@
 [ext_resource type="AudioStreamWAV" path="res://game/player/sfx/hit.wav" id="9_hit"]
 [ext_resource type="AudioStreamWAV" path="res://game/player/sfx/hurt.wav" id="10_hurt"]
 [ext_resource type="AudioStreamWAV" path="res://game/player/sfx/die.wav" id="11_die"]
+[ext_resource type="AudioStreamWAV" path="res://game/player/sfx/dodge.wav" id="12_dodge"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 5.0
@@ -54,6 +55,7 @@ script = ExtResource("3_audio")
 sounds = {
 "charge": ExtResource("6_charge"),
 "die": ExtResource("11_die"),
+"dodge": ExtResource("12_dodge"),
 "heavy": ExtResource("7_heavy"),
 "hit": ExtResource("9_hit"),
 "hurt": ExtResource("10_hurt"),

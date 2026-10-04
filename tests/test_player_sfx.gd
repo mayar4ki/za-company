@@ -30,7 +30,7 @@ extends "res://tests/helpers.gd"
 ## on purpose rather than read back off `ATTACK_SOUNDS`: a test that derives
 ## its expectation from the thing under test agrees with a typo.
 const CUES := ["swing", "swing2", "charge", "heavy", "wildfire",
-	"hit", "hurt", "die"]
+	"hit", "hurt", "die", "dodge"]
 
 ## The one that is a loop, because the stance is held for as long as the button
 ## is (tools/sfx/player.py). Nothing else here holds.

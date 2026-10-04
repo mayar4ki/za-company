@@ -264,8 +264,8 @@ feel*: game/player/CLAUDE.md.
 
 **The player makes noise on the bestiary's exact terms: by owning the files.**
 An `Audio` child (`game/player/player_audio.gd` - a neighbour of
-`enemy_audio.gd`, deliberately not it bubbled up) and eight cues: `swing`,
-`swing2`, `charge`, `heavy`, `wildfire`, `hit`, `hurt`, `die`. One set serves
+`enemy_audio.gd`, deliberately not it bubbled up) and nine cues: `swing`,
+`swing2`, `charge`, `heavy`, `wildfire`, `hit`, `hurt`, `die`, `dodge`. One set serves
 all ten characters, so `hurt` and `die` cannot commit to a gender. A swing is
 air and `hit` is a blow that LANDED, once per frame rather than per enemy;
 `drain()` is deliberately silent; and the charge is the one loop - the ring at
