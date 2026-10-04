@@ -731,10 +731,15 @@ the boxes' margins outvote it.
   installer + portable zip and the macOS .dmg on GitHub's machines, tags
   `v<VERSION>` and publishes a GitHub Release carrying them. So never bump
   `VERSION` as a side effect of other work; it is the user's call. A push to
-  `develop` touching the presets, the workflow or `tools/release/` is a dry
-  run of all of it. **A deploy to dev** is that run started by hand on
-  `develop` with its box ticked, and never automatic: the same gated builds,
-  then the rolling `dev` pre-release (files always named `dev`, never
+  `develop` touching `VERSION`, the presets, the workflow or `tools/release/`
+  is a dry run of all of it, and every build on `develop` is a DEV build, so
+  the release's own packaging is first built on `main`. **A deploy to dev**
+  is never automatic, and is either that run started by hand on `develop`
+  with its box ticked, or **Deploy dev** (`.github/workflows/deploy_dev.yml`)
+  run on a `develop` build that already went green - the newest by default -
+  which ships that run's files without building them again; the box calls
+  the same workflow, so the two cannot drift. Either way: the same gated
+  builds, then the rolling `dev` pre-release (files always named `dev`, never
   "latest", so no player or update check is offered it), dev's own
   signaling rebuilt from `develop`'s `server/`, and
   https://dev.za-company.mayar-deeb.dev. Its builds carry the custom feature
