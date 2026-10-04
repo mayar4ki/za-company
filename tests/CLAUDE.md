@@ -305,7 +305,11 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     looks inside the real builds, tools/release/check_plugin.sh).
     And that a dev build can still be made a different app: the fields
     prepare.sh renames are where it looks for them, and the installer has a
-    second `AppId`. No network: the answers are handed to the check directly.
+    second `AppId`. And that every scene survives the export packing it
+    again: no Control holds anchors off the corner while Godot keeps it in
+    POSITION mode, which is how 0.4.0 shipped the boss bar in the top-left
+    while every suite, reading the text scene, saw it bottom-centre.
+    No network: the answers are handed to the check directly.
   - `test_updater.gd` - the in-game updater (todo.md Parts A and B): the
     switch is off and a feed turns it on, an installed Windows copy may update
     itself and a portable one keeps the link, the right file is picked per

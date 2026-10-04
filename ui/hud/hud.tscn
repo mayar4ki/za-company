@@ -72,3 +72,4 @@ theme_override_constants/separation = 2
 
 [node name="BossBar" parent="." instance=ExtResource("3_boss_bar")]
 unique_name_in_owner = true
+layout_mode = 1

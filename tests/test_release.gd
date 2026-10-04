@@ -24,6 +24,7 @@ func _tick(frame: int) -> void:
 			_answers()
 			_presets()
 			_dev_identity()
+			_repacked()
 			_finish()
 
 
@@ -165,6 +166,51 @@ func _dev_identity() -> void:
 	_check("dev: under its own name, and setup uses it",
 		iss.contains("#ifdef Dev") and iss.contains('#define AppName "The New Hire (dev)"')
 		and iss.contains("AppId={#AppGuid}"))
+
+
+## An export does not ship the .tscn: it packs every scene again from a live
+## instance, so a Control lands where its PROPERTIES say on reload, not where
+## the file did. A Control with no `layout_mode` written is held in POSITION
+## mode, where `anchors_preset` reads TOP_LEFT whatever its anchors are - and
+## an instance of one gets that written down as an override, applied after its
+## anchors. That put the boss bar in the top-left corner of the 0.4.0 builds
+## while every suite, which loads the text, saw it bottom-centre. So: no
+## Control may hold anchors off the corner while its preset says the corner.
+func _repacked() -> void:
+	var scenes := _scenes("res://")
+	var wrong := []
+	for path in scenes:
+		var live := (load(path) as PackedScene).instantiate()
+		for node in _controls(live):
+			var c := node as Control
+			var cornered := c.anchor_left == 0.0 and c.anchor_top == 0.0 \
+				and c.anchor_right == 0.0 and c.anchor_bottom == 0.0
+			if not cornered and c.anchors_preset == Control.PRESET_TOP_LEFT:
+				wrong.append("%s:%s" % [path.get_file(), live.get_path_to(c)])
+		live.free()
+	_check("export: %d scenes keep their anchors when packed again, wrong: %s"
+		% [scenes.size(), wrong], scenes.size() > 0 and wrong.is_empty())
+
+
+func _controls(node: Node) -> Array:
+	var out := [node] if node is Control else []
+	for child in node.get_children():
+		out.append_array(_controls(child))
+	return out
+
+
+## Every scene an export can ship: not the folders the presets leave out.
+func _scenes(dir_path: String) -> Array:
+	var out := []
+	var dir := DirAccess.open(dir_path)
+	for sub in dir.get_directories():
+		if sub.begins_with(".") or sub in ["addons", "build", "docs", "server", "tests", "tools"]:
+			continue
+		out.append_array(_scenes(dir_path.path_join(sub)))
+	for file in dir.get_files():
+		if file.ends_with(".tscn"):
+			out.append(dir_path.path_join(file))
+	return out
 
 
 ## Whether a comma-separated preset field names `item` exactly.
