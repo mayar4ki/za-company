@@ -14,8 +14,11 @@ extends "res://game/bosses/boss_base.gd"
 ##   Bell drawing a ring under one and a lane under the other. He never throws
 ##   the same one three times running, so the read never becomes a habit.
 ## - **corner rush** breaks the pattern for a player who kites. If you are out
-##   of reach and in front of him he closes the gap in one dash, then the
-##   combination starts again from the top.
+##   of reach and in front of him he crouches where he stands, then closes the
+##   gap in one dash along his line, and the combination starts again from the
+##   top. The crouch is the tell and it outlasts a reaction, and like the
+##   uppercut the answer is to step ASIDE: the dash runs straight along his
+##   line, while backing off outruns it only from the far end of his reach.
 ##
 ## Three things answer what the PLAYER does rather than where they stand, and
 ## each one is the punishment for a kind of greed:
@@ -174,8 +177,10 @@ var is_raging := false
 ## Closer than this and he just punches; the rush is for the gap.
 @export var rush_min_distance := 46.0
 @export var rush_cooldown := 3.5
-## How far the dash carries him, per strike frame.
-@export var rush_speed := 190.0
+## How fast the dash carries him once the crouch is over. Over the 0.30 s of
+## running frames that is about 68 px - the whole of his lane, so a player who
+## stays on his line is reached from anywhere in it.
+@export var rush_speed := 225.0
 
 @onready var _lane: Area2D = $Lane
 @onready var _lane_reach: float = absf(_lane.position.x)
@@ -237,12 +242,14 @@ func _physics_process(delta: float) -> void:
 	_watch_pressed(delta)
 	_carry_throw(delta)
 	_run_flurry()
-	# The dash IS the rush's wind-up: he crouches, runs, and the blow lands on
-	# the last running frame, so he connects when he arrives rather than
-	# swinging at the air halfway there. There is no STRIKE phase to hang this
-	# on - enemy_base fires the blow at the end of WINDUP and goes straight to
-	# RECOVER - so the travel is the whole wind-up.
-	if attack == "rush" and phase == Phase.WINDUP:
+	# The dash is the back of the rush's wind-up: he crouches, runs, and the
+	# blow lands on the last running frame, so he connects when he arrives
+	# rather than swinging at the air halfway there. There is no STRIKE phase
+	# to hang this on - enemy_base fires the blow at the end of WINDUP and goes
+	# straight to RECOVER - so the travel lives inside the wind-up. Not the
+	# crouch, though: that is the tell, and he holds it where he stands.
+	if attack == "rush" and phase == Phase.WINDUP \
+			and _phase_time >= Poses.tell_of("rush"):
 		var dir := -1.0 if _facing_left else 1.0
 		velocity.x = dir * rush_speed
 		move_and_slide()

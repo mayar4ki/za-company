@@ -6,6 +6,9 @@ extends "res://tests/helpers.gd"
 ##
 ## - HOOK OR UPPERCUT: the third punch is one of two, they want opposite
 ##   answers, and he never throws the same one three times running.
+## - THE CORNER RUSH, which is older than the four but was unfair until its
+##   crouch became a tell: he stands for it, then runs, and a player who sees
+##   it and steps off his line a reaction later is passed by.
 ## - SHELL UP: three quick hits and he covers; a hit on the shell is blocked
 ##   and countered, a shell waited out drops his guard.
 ## - CLINCH & THROW: stand pressed against him and he heaves you off.
@@ -23,7 +26,13 @@ const Poses := preload("res://game/bosses/big_mo/poses.gd")
 const AT := Vector2(232, 140)
 
 const ORDER := ["picks", "uppercut_line", "uppercut_aside", "hook_aside",
-	"hook_back", "shell_hit", "shell_wait", "clinch", "flurry", "done"]
+	"hook_back", "rush_line", "rush_up", "rush_down", "shell_hit", "shell_wait",
+	"clinch", "flurry", "done"]
+
+## A human reaction, in frames: how long after the rush begins the player in
+## `rush_up` and `rush_down` starts to step off his line. 0.40 s - long enough
+## to see the crouch AND tell it from the punches, not just to twitch.
+const REACTION_FRAMES := 24
 
 ## A stage that has not finished by then has failed; the next one runs anyway.
 const STAGE_FRAMES := 420
@@ -56,6 +65,12 @@ func _tick(frame: int) -> void:
 			_one_blow("hook", true, "but the same step aside is still inside the hook")
 		"hook_back":
 			_one_blow("hook", false, "and stepping back the uppercut's distance clears the hook")
+		"rush_line":
+			_rush(KEY_NONE)
+		"rush_up":
+			_rush(KEY_W)
+		"rush_down":
+			_rush(KEY_S)
 		"shell_hit":
 			_shell_hit()
 		"shell_wait":
@@ -110,6 +125,9 @@ func _begin(stage: String) -> void:
 		"shell_wait":
 			# Out of reach, so the stage measures the stance and nothing else.
 			offset = Vector2(70, 0)
+		"rush_line", "rush_up", "rush_down":
+			# Out of reach and straight ahead: what the rush is for.
+			offset = Vector2(70, 0)
 		"clinch":
 			# Pressed against him: closer than any punch needs.
 			offset = Vector2(12, 0)
@@ -121,6 +139,8 @@ func _begin(stage: String) -> void:
 			_m.call("_begin_attack", "uppercut")
 		"hook_aside", "hook_back":
 			_m.call("_begin_attack", "hook")
+		"rush_line", "rush_up", "rush_down":
+			_m.call("_begin_attack", "rush")
 		"shell_hit", "shell_wait":
 			# Breathing for ever, so he is between punches when the hits land -
 			# mid-wind-up he is committed to the swing and does not cover up.
@@ -179,6 +199,38 @@ func _one_blow(id: String, lands: bool, what: String) -> void:
 	if _since == 60:
 		var hp := _hp()
 		_check("big mo: %s (%d)" % [what, hp], hp == (82 if lands else 100))
+		_next()
+
+
+## The corner rush, begun by hand on a player 70 px straight ahead. He crouches
+## where he stands for the whole tell and only then runs, so a player who stays
+## on his line is hit on arrival and one who steps off it a reaction time after
+## the crouch is passed by - either way, though up is the longer step, his reach
+## being centred above his feet. 10 on MEDIUM.
+func _rush(step: Key) -> void:
+	var aside := step != KEY_NONE
+	if _since == 2:
+		_check("big mo: the rush plays its own row (%s)" % _sprite_of(_m).animation,
+			_sprite_of(_m).animation == &"rush_side")
+	if _since == roundi(Poses.tell_of("rush") * 60.0) - 2:
+		var crept: float = absf(_m.global_position.x - AT.x)
+		_check("big mo: he stands still through the rush's %.2f s tell (%.1f px moved)"
+			% [Poses.tell_of("rush"), crept], crept < 0.5)
+	if aside and _since == REACTION_FRAMES:
+		_key(step, true)
+	# A few frames past the blow, and well inside the recover - the next thing
+	# he could throw is still most of a second away.
+	if _since == roundi(Poses.windup_of("rush") * 60.0) + 6:
+		if aside:
+			_key(step, false)
+		var ran: float = _m.global_position.x - AT.x
+		_check("big mo: and then he runs at you (%.0f px)" % ran, ran > 50.0)
+		if aside:
+			_check("big mo: seen and stepped %s a reaction later, the rush goes past (%d)"
+				% ["up" if step == KEY_W else "down", _hp()], _hp() == 100)
+		else:
+			_check("big mo: stood on his line, the rush lands on arrival (%d)" % _hp(),
+				_hp() == 90)
 		_next()
 
 

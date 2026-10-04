@@ -89,6 +89,9 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     terms, a FRESH Big Mo per stage: a string is jab, jab, then a hook or an
     uppercut and never three of one running; the uppercut reaches 30 px down
     his line and misses one step aside, while the hook is the other way round;
+    the corner rush stands still through its crouch, lands on a player who
+    stays on his line 70 px out, and misses one who steps up or down 0.40 s
+    after it begins (a reaction, by `_key`, not a teleport);
     three quick hits shell him, a hit on the shell is blocked (no health off)
     and countered for 12 by an attack that cannot be mashed out of, and a
     shell waited out opens his guard to hits and does not come back inside its

@@ -39,10 +39,23 @@ His pieces:
   centred per frame, or the body jitters between frames of a row.
 - **A RHYTHM rather than a menu** (`big_mo.gd`): jab, jab, then the big one,
   then `breath_seconds`. The corner rush breaks the pattern for a player who
-  kites - and the dash IS its wind-up, with the blow on the last running
-  frame, so he connects on arrival rather than swinging halfway there. There
-  is no STRIKE phase to hang travel on: enemy_base fires the blow at the end of
-  WINDUP and goes straight to RECOVER.
+  kites - and the dash is the back of its wind-up, with the blow on the last
+  running frame, so he connects on arrival rather than swinging halfway there.
+  There is no STRIKE phase to hang travel on: enemy_base fires the blow at the
+  end of WINDUP and goes straight to RECOVER.
+- **The rush's crouch is a TELL, and he does not move during it.** He used to
+  run from the first frame, so the blow was 0.36 s from a standing start -
+  under a reaction plus the walk out of a 27 px reach, which made it
+  unavoidable by anything but a lucky roll. Now he crouches where he stands for
+  `Poses.tell_of("rush")` (0.50 s), then runs two 0.15 s strides at
+  `rush_speed` 225, still about 68 px, so whoever stays on his line is reached
+  from anywhere in it. The answer is the uppercut's: step ASIDE. A player who
+  starts moving up to 0.40 s after the crouch begins gets clear, either way,
+  and test_big_mo_moves.gd's `rush_up` / `rush_down` stages measure exactly
+  that. The Bell's speed lines start with the run, not the crouch. Note the
+  margin is thinner than the arithmetic says: `_strike` reads the Touch
+  area's overlap from the PREVIOUS physics frame, so a body clear of his
+  reach by one frame's walk still counts as hit.
 - **Commit is per attack.** `COMMIT` sets `commit_fraction` as each attack
   begins - the base has one dial. Read the dial the right way round: it is how
   much of the wind-up can STILL be interrupted, so 0.0 is committed from the

@@ -221,9 +221,12 @@ func _draw_screen(anim: String, since: float, loading: float) -> void:
 			draw_rect(Rect2(Vector2.ZERO, view),
 				Color(HOT, 0.55 * (1.0 - since / FLASH_SECONDS)))
 
-	# The dash's speed lines run from the first frame of the charge through to
-	# just after he arrives - one continuous streak across the whole rush.
-	if anim == "rush" and since < STREAK_SECONDS:
+	# The dash's speed lines run from the first RUNNING frame through to just
+	# after he arrives - one continuous streak across the whole charge. Not
+	# through the crouch before it: he stands still for that, and streaks on a
+	# body that is not moving would say he had already gone.
+	if anim == "rush" and since < STREAK_SECONDS \
+			and since >= Poses.tell_of("rush") - Poses.windup_of("rush"):
 		for streak in RUSH_STREAKS:
 			draw_rect(Rect2(0.0, roundf(at.y - world * float(streak[0])), view.x, world),
 				Color(BONE, float(streak[1])))

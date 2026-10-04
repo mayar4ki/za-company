@@ -159,14 +159,24 @@ const ANIMS := {
 	# CORNER RUSH - the gap-closer for a player who kites to the ring edge.
 	# He pitches forward, tucks his head and runs; the strike frames are the
 	# ones that carry him.
+	#
+	# The crouch is the TELL, and he holds it where he stands: nothing moves
+	# him until the first running frame (`tell_of`). The whole wind-up has to
+	# outlast a reaction. When he ran from the first frame, the blow was 0.36 s
+	# from a standing start, and a player who saw it coming had about a tenth of
+	# a second left to get out of a 27 px reach. Now it is 0.80 s: 0.50
+	# crouched, then two 0.15 strides. Getting clear sideways takes about 0.4 s
+	# of walking from a standing start, so a player who starts to move up to
+	# 0.4 s after the crouch begins gets off his line, measured in
+	# tests/test_big_mo_moves.gd - and he still lands on whoever stays on it.
 	"rush": [
-		{"dur": 0.16, "phase": "w", "dy": 2, "legs": [1, 1], "stance": -1, "hdy": 1,
+		{"dur": 0.50, "phase": "w", "dy": 2, "legs": [1, 1], "stance": -1, "hdy": 1,
 			"L": {"ex": -17, "ey": 12, "gx": -15, "gy": -2},
 			"R": {"ex": 17, "ey": 12, "gx": 15, "gy": -2}},
-		{"dur": 0.10, "phase": "s", "dy": -1, "hdy": 2, "legs": [-4, 3], "stance": 4,
+		{"dur": 0.15, "phase": "s", "dy": -1, "hdy": 2, "legs": [-4, 3], "stance": 4,
 			"L": {"ex": -17, "ey": 12, "gx": -12, "gy": -7},
 			"R": {"ex": 17, "ey": 12, "gx": 12, "gy": -7}},
-		{"dur": 0.10, "phase": "s", "dy": -2, "hdy": 2, "legs": [3, -4], "stance": 4,
+		{"dur": 0.15, "phase": "s", "dy": -2, "hdy": 2, "legs": [3, -4], "stance": 4,
 			"L": {"ex": -17, "ey": 12, "gx": -12, "gy": -7},
 			"R": {"ex": 17, "ey": 12, "gx": 12, "gy": -7}},
 		# The blow lands on ARRIVAL, not mid-charge: the impact is the last
@@ -342,6 +352,18 @@ static func windup_of(anim: String) -> float:
 	var total := 0.0
 	for frame in ANIMS[anim]:
 		if frame.get("impact", false):
+			return total
+		total += frame["dur"]
+	return total
+
+
+## Seconds of loading before anything is thrown: the "w" frames at the head of
+## an attack. For the rush it is how long he crouches before he runs - the
+## boss script roots him for it and the Bell starts the speed lines after it.
+static func tell_of(anim: String) -> float:
+	var total := 0.0
+	for frame in ANIMS[anim]:
+		if frame.get("phase", "") != "w":
 			return total
 		total += frame["dur"]
 	return total
