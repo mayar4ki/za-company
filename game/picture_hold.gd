@@ -8,13 +8,18 @@ extends Node
 ## player's swing would stop it for everybody, fifty times a fight. So online a
 ## stop holds what is DRAWN and nothing that DECIDES:
 ##
-## - **every animation** in the room and the party stops on the frame it is
-##   showing - the swing, the body it hit, everybody else;
+## - **every animation** in the room stops on the frame it is showing - the
+##   swing, the body it hit, this machine's player;
 ## - **every effect of the hit feel** (`EFFECTS`) stops where it is - the
 ##   number over the body, the burst, the bolt, the sparks;
 ## - and nothing else. Bodies keep moving, timers keep counting, an enemy winding
 ##   up keeps winding up, and the room is exactly as far along as it would have
 ##   been - which is the whole point.
+##
+## **Never somebody else's player**, nor anything drawn on it. Its picture is
+## its owner's (game/sync/bodies.gd), held by its owner's own stops, and goes on
+## gliding through this one - so a held sprite on it was legs frozen mid-stride
+## sliding across the floor, every time this machine landed a blow.
 ##
 ## **And when it lets go, every animation is CAUGHT UP** by the time it was
 ## held (`catch_up`). A sprite left behind would be a sprite out of step with
@@ -65,10 +70,23 @@ func hold(seconds: float) -> void:
 	if _held.is_empty():
 		held += 1
 	_until = maxf(_until, now + seconds)
+	var others := _others()
 	for node in get_parent().find_children("*", "", true, false):
-		if not _held.has(node) and (node is AnimatedSprite2D or EFFECTS.has(node.get_script())):
-			_held[node] = [node.process_mode, now]
-			node.process_mode = Node.PROCESS_MODE_DISABLED
+		if _held.has(node) or not (node is AnimatedSprite2D or EFFECTS.has(node.get_script())):
+			continue
+		if others.any(func(body: Node) -> bool: return body.is_ancestor_of(node)):
+			continue
+		_held[node] = [node.process_mode, now]
+		node.process_mode = Node.PROCESS_MODE_DISABLED
+
+
+## Everybody else's player - see the header.
+func _others() -> Array:
+	var game := get_parent()
+	if not game.has_method("party"):
+		return []
+	return (game.call("party") as Array).filter(
+		func(body: Node) -> bool: return is_instance_valid(body) and body.get("remote") == true)
 
 
 ## Whether a stop is holding the picture now.

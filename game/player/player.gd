@@ -459,9 +459,17 @@ func net_state() -> Array:
 ## The newest word on a remote body: where it IS. Only the body moves here - the
 ## picture is net_draw's, a beat behind (game/sync/bodies.gd's header says why
 ## the two are apart).
+##
+## And the picture stays exactly where it was. A step arrives with the network
+## poll, after the physics frame that drew the picture and before the screen
+## is drawn, so a sprite left riding on the body would be put on screen a whole
+## step ahead and pulled back on the next physics frame - a twitch thirty times
+## a second, and an idle picture shuffling before its walk has begun.
 func apply_net_state(state: Array) -> void:
 	if state.size() >= 7:
+		var was := global_position
 		global_position = state[0]
+		_sprite.position -= global_position - was
 
 
 ## A remote body's picture: what its owner drew `DELAY` ago, standing at

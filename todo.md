@@ -7,6 +7,12 @@
 
 [ ] Playtest notes (2026-10-03)
     [ ] Player movement feels odd, as if it lags - investigate
+        [x] A teammate twitched a step forward and back 30 times a second,
+            and shuffled in their idle pose before a walk (game/sync/CLAUDE.md)
+        [x] Your own hits froze a teammate's legs while they kept sliding
+        [ ] Still to watch in a real game: a teammate walking in place, then
+            jumping ahead - messages arriving late. Note the corner ping
+            when it happens
     [ ] Dodge incoming attacks (Ctrl)
     [ ] A dead player's camera follows the players still standing
     [ ] A teammate can revive a dead player, who gets up with 50% health

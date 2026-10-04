@@ -402,10 +402,11 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     is thrown his hearts by the host, landing on the guest's floor.
   - `test_coop_feel.gd` - the same two machines, and THE FEEL (M4): the host
     draws a walking guest's picture a beat behind its body and back on it once
-    it stops; a body the host walks a pixel a frame GLIDES on the guest,
+    it stops, and never a step back on any frame that reaches the screen
+    (sampled on `process_frame`, after the network poll); a body the host walks a pixel a frame GLIDES on the guest,
     moving on nearly every frame where twenty snapshots a second would move it
-    on one in three; a blow that lands holds the host's picture and never
-    `Engine.time_scale`; the host's blow puts its number up on the guest, its
+    on one in three; a blow that lands holds the host's picture - its own
+    sprite, never the guest's - and never `Engine.time_scale`; the host's blow puts its number up on the guest, its
     swing is heard there off its picture and its impact on its word, and its
     kill breaks apart there; the guest's whole combo is dealt on the host and
     drawn there - numbers over the guard, the arc's bolt, the pieces - with

@@ -9,8 +9,8 @@ extends "res://tests/coop.gd"
 ##   twenty times a second (game/sync/timeline.gd).
 ## - **The stop holds the picture.** A blow that lands online holds this
 ##   machine's animations and effects and never the engine's clock - the
-##   host's world is everybody's - and somebody else's blow holds nothing here
-##   (game/picture_hold.gd).
+##   host's world is everybody's - and never somebody else's player; and
+##   somebody else's blow holds nothing here (game/picture_hold.gd).
 ## - **Everybody sees every blow.** A blow is a player's MOMENT, told through
 ##   the host (game/sync/world.gd's *A player's moment*): the number over the
 ##   body, the pieces when it dies, the bolt, the swing's air and its impact -
@@ -36,6 +36,14 @@ var _lag := 0.0
 var _scaled := false
 var _held_before := 0
 var _seen := {}
+## The guest's picture on the host, as last put on screen, and how many frames
+## put it further back than the one before (_on_screen).
+var _shown_x := NAN
+var _backward := 0
+## Over a stop the host's blow holds: whether it held the host's own sprite,
+## and whether it held the guest's.
+var _held_mine := false
+var _held_theirs := false
 
 
 func _init() -> void:
@@ -86,10 +94,14 @@ func _still_room() -> void:
 
 
 ## The guest walks east, and the host latches how far behind its body the
-## picture of it is drawn.
+## picture of it is drawn - and watches every frame of that picture go on
+## screen.
 func _guest_walks() -> void:
 	_lag = 0.0
 	_mark = _second().global_position
+	_shown_x = NAN
+	_backward = 0
+	process_frame.connect(_on_screen)
 	_tell("key", [KEY_D, true])
 	_wait("bodies: the guest walks", func() -> bool:
 		var sprite := _second().get_node("AnimatedSprite2D") as Node2D
@@ -97,10 +109,24 @@ func _guest_walks() -> void:
 		return _second().global_position.x > _mark.x + 40.0)
 
 
+## Where the guest's picture is on THIS frame's screen. Read on process_frame,
+## which comes after the network poll has stood the body on whatever step just
+## arrived and before anything is drawn - a moment _tick, which runs before the
+## poll, never sees.
+func _on_screen() -> void:
+	var x := (_second().get_node("AnimatedSprite2D") as Node2D).global_position.x
+	if not is_nan(_shown_x) and x < _shown_x - 0.01:
+		_backward += 1
+	_shown_x = x
+
+
 func _picture_lags() -> void:
 	_tell("key", [KEY_D, false])
+	process_frame.disconnect(_on_screen)
 	_check("picture: walking, the host draws the guest a beat behind its body (%.1f px)"
 		% _lag, _lag > 3.0 and _lag < 30.0)
+	_check("picture: and a guest walking east is never drawn a step back (%d frames)"
+		% _backward, _backward == 0)
 	_wait("picture: and once it stands still, the picture is where the body is",
 		func() -> bool:
 			var sprite := _second().get_node("AnimatedSprite2D") as Node2D
@@ -162,12 +188,18 @@ func _host_swings() -> void:
 	_key(KEY_D, false)
 	_held_before = int(_hold().get("held"))
 	_scaled = false
+	_held_mine = false
+	_held_theirs = false
 	_key(KEY_SPACE, true)
 	var guard := _room_node(NORTH)
+	var mine := _player().get_node("AnimatedSprite2D")
+	var theirs := _second().get_node("AnimatedSprite2D")
 	_wait("blows: the host's swing lands", func() -> bool:
 		if _f - _since == 4:
 			_key(KEY_SPACE, false)
 		_scaled = _scaled or Engine.time_scale != 1.0
+		_held_mine = _held_mine or mine.process_mode == Node.PROCESS_MODE_DISABLED
+		_held_theirs = _held_theirs or theirs.process_mode == Node.PROCESS_MODE_DISABLED
 		return int(guard.get("health")) < int(guard.get("max_health")) and _f - _since > 8)
 
 
@@ -175,6 +207,8 @@ func _host_stopped() -> void:
 	_check("stop: online it holds the host's picture (%d)" % int(_hold().get("held")),
 		int(_hold().get("held")) > _held_before)
 	_check("stop: and never the engine's clock, which is everybody's world", not _scaled)
+	_check("stop: it holds the host's own sprite", _held_mine)
+	_check("stop: and never the guest's, which is its owner's picture", not _held_theirs)
 
 
 func _guest_sees_number() -> void:

@@ -72,7 +72,14 @@ The host is the truth for everything but where a body is:
   purpose**: its BODY stands at the newest step - that is what the host decides
   blows, doors and pickups with, so a guest who stepped out of a swing is out
   of it as soon as the wire allows - and its PICTURE (the sprite's offset) is a
-  beat behind. What the host says ABOUT the room - a blow on you, health,
+  beat behind. **A step that arrives moves the body and NOT the picture**
+  (player.gd's `apply_net_state()` takes the offset back by what the body
+  moved): steps land in the network poll, after the physics frame that drew
+  the picture and before the screen, so a sprite riding on the body was put on
+  screen a step ahead and pulled back next frame - the playtest's "their
+  movement lags", measured at 21 frames in 72 drawn backwards, and caught now
+  by test_coop_feel.gd sampling on `process_frame`, the one moment after the
+  poll. What the host says ABOUT the room - a blow on you, health,
   down, up, lives, the end, every boss moment - waits for the same moment of
   the same clock (`Sync.later()`), so a number comes up as the drawn sword
   lands; only the welcome and the order to travel are acted on when heard, and
@@ -87,7 +94,10 @@ The host is the truth for everything but where a body is:
   animation up by the time it was held - a boss's sprite is his telegraph, and
   a swing must still end itself (`animation_finished`). Asked by this
   machine's own blows and by a boss's, whose `froze` is told like his shake;
-  somebody else's blow holds nothing here.
+  somebody else's blow holds nothing here. And it never holds somebody ELSE'S
+  player, or anything drawn on it: that picture is its owner's and goes on
+  gliding through the stop, so holding its sprite slid a teammate across the
+  floor on frozen legs every time this machine landed a blow.
 - **Every blow is seen everywhere.** A blow and a bolt are a player's MOMENTS,
   told by whoever moves that player and passed through the host
   (`World.from_player`, player.gd's `_tell` / `net_event`): the host deals a
