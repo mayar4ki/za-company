@@ -47,7 +47,8 @@ enemies reach the player by the `player` group + `has_method`, never by type.
 
 **Four ways the world reaches the player, and the splits between them are the
 thing to get right.** A *blow* (`take_damage()`) is metered by the grace window
-and opens a fresh one. That window is the only rate limiter for blows anywhere
+and opens a fresh one - and misses outright a body in the untouchable stretch
+of a roll, the one way a blow can be beaten by timing (*The dodge*, below). That window is the only rate limiter for blows anywhere
 in the game, and it is per-difficulty (`Difficulty.grace_seconds()`, read once
 at spawn) because it is secretly the CROWD dial: a guard's full attack cycle is
 0.8s, so a grace of 0.8 (EASY) swallows every extra guard's strikes and N
@@ -172,9 +173,9 @@ pickup is back on the next visit - rooms keep no state yet.
 
 ## The hands - an input source, not `Input`
 
-The player never reads `Input`. It asks its `input_source` three things - where
+The player never reads `Input`. It asks its `input_source` four things - where
 the stick points, whether attack is held, whether attack went down THIS physics
-frame - and `game/player/input_source.gd`, the one it gets by default, answers
+frame, and whether the dodge did - and `game/player/input_source.gd`, the one it gets by default, answers
 them off the keyboard exactly as player.gd used to itself. That is the seam a
 party needed: two bodies in one room cannot both be driven by one keyboard, so
 whatever answers those three questions can move a player -
@@ -454,6 +455,78 @@ All of the above was one machine's until M4. Three rules carry it across:
 
 And a remote body is HEARD from where it stands: player_audio.gd builds its
 speakers positional, the one exception to that file's first line.
+
+## The dodge - the tumble roll
+
+The fifth move, and the first off the attack button: `dodge` is K, and Ctrl
+under the little finger on WASD - on the desktop builds only. In a browser
+Ctrl+W closes the tab and no page can stop it, so the keyboard source takes
+Ctrl back out of a web build (`input_source.gd`'s `browser_keys()`). Shift was
+never a candidate: five quick presses open Windows' Sticky Keys box over the
+game. Picked from the Dodge Lab preview (option A of a roll, a volt dash and a
+side hop, https://claude.ai/artifact/2ucqkdtJrk4VmSgKE3gLU6) and shipped as
+previewed, frames and numbers both.
+
+**A roll is a real move.** `DODGE_DISTANCE` (48) in a straight line over
+`DODGE_SECONDS` (0.32) at a steady speed, the way the stick points - or
+straight back, away from the facing, with the stick at rest, so whatever you
+were swinging at stays in front of you. Its velocity is the roll's own every
+frame rather than carried, so a desk, a wall or a body stops it short and
+nothing it ran into is still pushing on the next frame; a slow takes the same
+share of it that it takes of a walk; and it runs on into the walk
+(`DODGE_EXIT`, 0.8 of walking speed in whatever is held) instead of stopping
+dead.
+
+**A blow misses it from `DODGE_SAFE_FROM` to `DODGE_SAFE_UNTIL` - 0.04 to
+0.26 s in** - which is most of it, and is what made the roll the forgiving one
+of the three. Blows only: `take_damage()` returns before the grace check, so a
+blow that missed opens no window, while `drain()`, `apply_slow()` and
+`shove()` reach a rolling body exactly as they reach a standing one - the
+wraith's drain is the one harm designed to have no timing answer, and a roll
+must not become one. The first frames are open on purpose: a roll pressed as
+the blow lands is too late. **`DODGE_COOLDOWN` (0.45) runs from the END of a
+roll**, because rolls that chain would be a second grace window, and the grace
+window is the crowd dial (*Health*, above).
+
+**What it does to the attack button.** It cuts a swing, a slash or an arc
+short (what the blade already hit stays hit, and the combo's window closes),
+and drops a charge the way letting go early does; it is refused from inside the
+heavy and its wildfire, whose rooted seconds are part of the heavy's damage
+maths. A press during a roll is owed rather than dropped - a dropped press
+reads as the game eating the button - and swings the moment it ends.
+
+**The frames are in no sheet on disk.** Rows 24-26 (`dodge_down/up/side`, four
+frames at 12.5 a second, one per 0.08 s) are the idle body moved about by
+`tools/roll_pose.gd`, the preview's own generator ported line for line: a
+crouch, then the head-and-shirt ball going over - a quarter turn at a time in
+its 12 x 12 box side-on, crown first toward or away from the camera, where a
+ball cannot turn round. build_characters.gd builds them from each character's
+sheet AFTER its recolour, on every run, and the order is the preview's for a
+reason: the recolour reshapes as well as recolours (curls grow from the top of
+the hair, a beard is found through the eyes), so a ball turned BEFORE it is not
+the ball that was picked - 8 of the 10 came out 111 to 299 pixels different
+that way. So a redrawn idle row brings its roll with it, and the roll is redrawn
+by redrawing the idle, never in the PNG.
+
+**The dust** is `roll_dust.gd`, the preview's puff - landing_dust.gd's twin
+with a velocity of its own: two kicked up behind the roll as it starts, one left
+under it every `DUST_EVERY` (0.09 s), and one thrown ahead as it stands.
+Top-level in the body's parent, so it stays where it was kicked up and draws
+over the bodies, as the page drew it.
+
+**Online, the host trusts the roller.** A body's step (`net_state()`) carries
+which way it is rolling and whether it is in the untouchable stretch, and on the
+host `take_damage()` on a remote body reads that word (`_net_untouchable`) off
+its NEWEST step. The host decides every blow from a position that is a little
+old; without the flag a guest would roll clear on their own screen and be hit
+on the host's. A teammate's picture going into a roll kicks up the same dust on
+every other screen (`_drawn`). It is why `WIRE` is 4.
+
+It plays silent for now. A `dodge` cue is still to be cut - an entry in
+tools/sfx/player.py, `make.py player`, the stream in player.tscn, a `_sfx`
+call in `_start_dodge()` and the name in test_player_sfx.gd's CUES - and a cue
+fired with no file behind it is what that suite exists to catch.
+`tests/test_dodge.gd` owns the rest.
 
 ## Scripted control - when the world has the wheel
 

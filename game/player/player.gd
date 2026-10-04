@@ -108,6 +108,30 @@ const MAX_SHOVE := 70.0
 ## a push you are still fighting a second later never happens.
 const SHOVE_SECONDS := 0.5
 
+## THE DODGE: the tumble roll, picked from the Dodge Lab preview (option A,
+## https://claude.ai/artifact/2ucqkdtJrk4VmSgKE3gLU6) and shipped as previewed -
+## its frames are tools/roll_pose.gd's, its dust roll_dust.gd's, and these are
+## its numbers. A roll is a real move, DODGE_DISTANCE in a straight line over
+## DODGE_SECONDS, the way the stick points - or straight back, away from the
+## facing, with the stick at rest - so a desk or a body in the way stops it.
+const DODGE_SECONDS := 0.32
+const DODGE_DISTANCE := 48.0
+## The stretch of the roll no blow can land in, in seconds from the press:
+## most of it, which is what made the roll the forgiving one of the three.
+## Blows only - a drain, a slow and a shove still reach a rolling body.
+const DODGE_SAFE_FROM := 0.04
+const DODGE_SAFE_UNTIL := 0.26
+## How long after a roll ENDS before the next can start. Without it rolls chain
+## into lasting safety, which is a second grace window nobody tuned - and the
+## grace window is the crowd dial.
+const DODGE_COOLDOWN := 0.45
+## The share of walking speed a held stick has on the frame a roll ends, so it
+## runs on into the walk instead of starting from a standstill.
+const DODGE_EXIT := 0.8
+## The dust left under the tumble: one puff this often, each lasting this long.
+const DUST_EVERY := 0.09
+const DUST_TRAIL_LIFE := 0.28
+
 ## How close the player has to get to a scripted destination before it counts
 ## as arrived. Six pixels rather than one: the escort's destination MOVES (it
 ## trails whoever is being followed), and a tighter ring makes the walk stutter
@@ -143,6 +167,7 @@ const Shock := preload("res://game/player/shock.gd")
 const KillBurst := preload("res://game/player/kill_burst.gd")
 const ScreenFlash := preload("res://game/player/screen_flash.gd")
 const Supernova := preload("res://game/player/supernova.gd")
+const RollDust := preload("res://game/player/roll_dust.gd")
 
 ## THE HIT FEEL, picked from the Combo Lab preview with one option per attack
 ## and shipped as previewed. None of it touches a damage number.
@@ -294,6 +319,21 @@ var _screen_flash: CanvasLayer = null
 var _drawn_move := ""
 ## The physics frame a remote body last made its `hit` on - see net_event.
 var _heard_hit := -1
+## The roll in progress: how far into it (negative while not rolling) and which
+## way, the cooldown left after the last one, and whether the attack button
+## went down during it - owed, and swung the moment it ends.
+var _dodge_t := -1.0
+var _dodge_dir := Vector2.ZERO
+var _dodge_cooldown := 0.0
+var _dodge_swing := false
+## Counts down to the next puff of a roll's trail: this body's own roll, or on a
+## remote body the roll its picture is in.
+var _dust_clock := 0.0
+## A remote body's: whether its owner says it is in the untouchable stretch of a
+## roll, as of the newest step. The host trusts it - see take_damage().
+var _net_untouchable := false
+## A remote body's: which way the roll its picture is in is going.
+var _drawn_roll := Vector2.ZERO
 
 
 func _ready() -> void:
@@ -370,7 +410,17 @@ func _physics_process(delta: float) -> void:
 	else:
 		_hold = 0.0
 
-	if not _charging and input_source.attack_pressed():
+	if _dodge_cooldown > 0.0 and not _dodging():
+		_dodge_cooldown = maxf(_dodge_cooldown - delta, 0.0)
+	if input_source.dodge_pressed():
+		_start_dodge(direction)
+
+	if _dodging():
+		# A press mid-roll is owed rather than dropped - a dropped press reads as
+		# the game eating the button - and swings as the roll ends.
+		if input_source.attack_pressed():
+			_dodge_swing = true
+	elif not _charging and input_source.attack_pressed():
 		if _attack == "":
 			_start_attack(_combo_next if _combo_grace > 0.0 else "attack")
 		else:
@@ -378,7 +428,9 @@ func _physics_process(delta: float) -> void:
 			# fresh swing.
 			_buffered = LIGHT_NEXT.get(_attack, "attack")
 
-	if _charging:
+	if _dodging():
+		_roll(delta)
+	elif _charging:
 		_charge += delta
 		var filled := clampf(_charge / CHARGE_SECONDS, 0.0, 1.0)
 		# Progress, twice, because a fight gives the player nowhere to look: the
@@ -424,6 +476,8 @@ func _physics_process(delta: float) -> void:
 		_apply_animation("idle")
 
 	move_and_slide()
+	if _dodging():
+		_rolled(delta)
 
 	# The shove rides ON TOP of whatever the player was doing rather than
 	# replacing it: a stumble you can still walk against is a stumble, and one
@@ -453,7 +507,8 @@ func _physics_process(delta: float) -> void:
 func net_state() -> Array:
 	return [global_position, _sprite.animation, _sprite.frame, _sprite.flip_h,
 		_sprite.modulate.to_rgba32(), _sprite.visible,
-		clampf(_charge / CHARGE_SECONDS, 0.0, 1.0) if _charging else 0.0]
+		clampf(_charge / CHARGE_SECONDS, 0.0, 1.0) if _charging else 0.0,
+		_dodge_dir if _dodging() else Vector2.ZERO, _untouchable()]
 
 
 ## The newest word on a remote body: where it IS. Only the body moves here - the
@@ -470,6 +525,9 @@ func apply_net_state(state: Array) -> void:
 		var was := global_position
 		global_position = state[0]
 		_sprite.position -= global_position - was
+	# The newest word, not the picture's: a blow on this body is decided on the
+	# host NOW, and whether it is mid-roll now is what its owner said last.
+	_net_untouchable = state.size() >= 9 and bool(state[8])
 
 
 ## A remote body's picture: what its owner drew `DELAY` ago, standing at
@@ -487,7 +545,7 @@ func net_draw(state: Array, where: Vector2) -> void:
 	var anim := StringName(state[1])
 	var frame := int(state[2])
 	if _sprite.animation != anim and _sprite.sprite_frames.has_animation(anim):
-		_drawn(String(anim).get_slice("_", 0))
+		_drawn(String(anim).get_slice("_", 0), state[7] if state.size() >= 9 else Vector2.ZERO)
 		_sprite.play(anim)
 		_sprite.frame = frame
 	elif absi(_sprite.frame - frame) > 1:
@@ -508,17 +566,28 @@ func net_draw(state: Array, where: Vector2) -> void:
 		_sprite.visible = bool(state[5])
 	if _ring != null:
 		_ring.progress = float(state[6])
+	# A roll's trail, under the picture rather than the body, on the owner's
+	# clock: one puff every DUST_EVERY while the picture tumbles.
+	if _drawn_move == "dodge":
+		_dust_clock -= get_physics_process_delta_time()
+		if _dust_clock <= 0.0:
+			_dust_clock = DUST_EVERY
+			RollDust.kick(self, global_position + _sprite.position,
+				Vector2(-_drawn_roll.x * 12.0, 0.0), DUST_TRAIL_LIFE)
 
 
 ## A remote body's picture going into another move: the moments its owner's
 ## machine had there, read off what it draws - the air of a swing, the heavy's
-## supernova, the charge's hum and its ring. Not the stop, the shake or the
-## flash: those are the attacker's to feel, on the attacker's screen.
-func _drawn(move: String) -> void:
+## supernova, the charge's hum and its ring, a roll's dust. Not the stop, the
+## shake or the flash: those are the attacker's to feel, on the attacker's
+## screen. `roll` is the way a roll the picture goes into is heading.
+func _drawn(move: String, roll := Vector2.ZERO) -> void:
 	if move == _drawn_move:
 		return
 	var was := _drawn_move
 	_drawn_move = move
+	if was == "dodge":
+		_stand_dust(global_position + _sprite.position, _drawn_roll)
 	if was == "charge":
 		if _ring != null:
 			if move == "heavy":
@@ -541,6 +610,10 @@ func _drawn(move: String) -> void:
 			nova.setup(global_position + _sprite.position, _spark)
 		"wildfire":
 			_sfx("wildfire")
+		"dodge":
+			_drawn_roll = roll
+			_dust_clock = 0.0
+			_kick_dust(global_position + _sprite.position, roll)
 		_:
 			_sfx(ATTACK_SOUNDS.get(move, ""))
 
@@ -553,6 +626,7 @@ func _drawn(move: String) -> void:
 func take_control() -> void:
 	_scripted = true
 	_lead = null
+	_drop_dodge()
 	_attack = ""
 	_buffered = ""
 	_combo_grace = 0.0
@@ -966,6 +1040,108 @@ func _end_charge(fired: bool) -> void:
 	_sfx_fade("charge", 0.08)
 
 
+## THE DODGE, on the K key (or Ctrl, off the web). Refused while one is still
+## rolling or cooling down, and from inside the heavy and its wildfire, whose
+## rooted seconds are part of its damage maths. Anything lighter it cuts short:
+## a swing, a slash or an arc is dropped where it stands - what the blade had
+## already hit stays hit - and a charge is dropped like letting go early.
+##
+## It plays silent: a `dodge` cue is still to be cut (tools/sfx/player.py),
+## and a cue fired with no file behind it is what test_player_sfx.gd catches.
+func _start_dodge(direction: Vector2) -> void:
+	if _dodging() or _dodge_cooldown > 0.0 or _attack == "heavy" or _attack == "wildfire":
+		return
+	var way := direction.normalized() if direction != Vector2.ZERO else -_facing_vector()
+	if _charging:
+		_end_charge(false)
+	if _attack != "":
+		_attack = ""
+		_buffered = ""
+		_combo_grace = 0.0
+	_face(way)
+	_dodge_t = 0.0
+	_dodge_dir = way
+	_dodge_swing = false
+	_dust_clock = 0.0
+	velocity = Vector2.ZERO
+	_apply_animation("dodge", true)
+	_kick_dust(global_position, _dodge_dir)
+
+
+## One frame of a roll: the next stretch of a straight line at a steady speed,
+## a slow taking the same share of it that it takes of a walk. The velocity is
+## the roll's own every frame rather than carried, so a desk that stops it
+## stops it, and nothing it ran into is still pushing on the next frame.
+func _roll(delta: float) -> void:
+	var was := _dodge_t
+	_dodge_t = minf(_dodge_t + delta, DODGE_SECONDS)
+	var stretch := DODGE_DISTANCE * (_dodge_t - was) / DODGE_SECONDS * slow_factor
+	velocity = _dodge_dir * (stretch / delta) if delta > 0.0 else Vector2.ZERO
+
+
+## After a roll's frame has moved: the trail of dust it leaves, and its end.
+func _rolled(delta: float) -> void:
+	_dust_clock -= delta
+	if _dust_clock <= 0.0:
+		_dust_clock = DUST_EVERY
+		RollDust.kick(self, global_position, Vector2(-_dodge_dir.x * 12.0, 0.0), DUST_TRAIL_LIFE)
+	if _dodge_t < DODGE_SECONDS:
+		return
+	_dodge_t = -1.0
+	_dodge_cooldown = DODGE_COOLDOWN
+	velocity = input_source.move() * SPEED * slow_factor * DODGE_EXIT
+	_stand_dust(global_position, _dodge_dir)
+	if _dodge_swing:
+		_dodge_swing = false
+		_start_attack(_combo_next if _combo_grace > 0.0 else "attack")
+	else:
+		_apply_animation("idle")
+
+
+## A roll dropped without finishing - the world taking the wheel, a death, a
+## respawn - with no dust, no swing owed and nothing to cool down from.
+func _drop_dodge() -> void:
+	_dodge_t = -1.0
+	_dodge_swing = false
+	_dodge_cooldown = 0.0
+
+
+func _dodging() -> bool:
+	return _dodge_t >= 0.0
+
+
+## Whether a blow would miss this body now. A remote body's is its owner's
+## word, from its newest step.
+func _untouchable() -> bool:
+	if remote:
+		return _net_untouchable
+	return _dodge_t >= DODGE_SAFE_FROM and _dodge_t <= DODGE_SAFE_UNTIL
+
+
+## The two puffs kicked up behind a roll as it starts.
+func _kick_dust(at: Vector2, way: Vector2) -> void:
+	RollDust.kick(self, at + Vector2(-way.x * 4.0, 0.0), Vector2(-way.x * 30.0, -way.y * 20.0))
+	RollDust.kick(self, at + Vector2(-way.x * 2.0 + way.y * 3.0, 0.0),
+		Vector2(-way.x * 20.0, -way.y * 14.0))
+
+
+## The one thrown ahead of a roll as it stands up.
+func _stand_dust(at: Vector2, way: Vector2) -> void:
+	RollDust.kick(self, at + Vector2(way.x * 3.0, 0.0), Vector2(way.x * 16.0, 0.0))
+
+
+## The way this body faces, as a direction: where a roll with the stick at rest
+## goes AWAY from.
+func _facing_vector() -> Vector2:
+	match _facing:
+		Facing.UP:
+			return Vector2.UP
+		Facing.SIDE:
+			return Vector2.LEFT if _facing_left else Vector2.RIGHT
+		_:
+			return Vector2.DOWN
+
+
 func _on_animation_finished() -> void:
 	if _attack == "":
 		return
@@ -1023,8 +1199,11 @@ func _world_reaches() -> bool:
 ## A blow: metered by the grace window, and it opens a fresh one. Online it is
 ## decided here, on the host, and the rest of the party hears of it (`reached`):
 ## the owner to blink and carry it, everybody else to see it land.
+##
+## A body in the untouchable stretch of a roll takes nothing and opens no window:
+## the blow simply missed. A remote body's roll is its owner's word for it.
 func take_damage(amount: int) -> void:
-	if not _world_reaches() or _grace > 0.0 or health <= 0:
+	if not _world_reaches() or _grace > 0.0 or health <= 0 or _untouchable():
 		return
 	_grace = _grace_window
 	_lose_health(amount)
@@ -1298,6 +1477,7 @@ func _belong() -> void:
 ## in it - or, released during the fade, popping a wildfire at the spawn - and
 ## a death mid-swing carries a live attack across the fade.
 func _drop_hands() -> void:
+	_drop_dodge()
 	_attack = ""
 	_buffered = ""
 	_hold = 0.0

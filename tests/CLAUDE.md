@@ -6,7 +6,7 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
 ## The suites
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Forty-one suites,
+  They drive the real game with synthesized input and exit 0/1. Forty-two suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu (HOST ONLINE and JOIN ONLINE, no MODE),
@@ -43,6 +43,21 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     frame "was it seen" and answers at the end. Note for every frame-numbered
     suite: a landed hit now stops the room for a few frames, so a check timed
     to the end of an attack that LANDS needs slack (test_arc.gd moved by 6).
+  - `test_dodge.gd` - the roll, stage after stage in the empty lobby: K and
+    Ctrl, and a browser keeping K alone; all ten characters' three rows, pixel
+    for pixel what tools/roll_pose.gd makes of the RECOLOURED sheet, and no
+    roll in the source PNG; exactly 48 px in 20 frames the way the stick
+    points, backwards with it at rest, the walk after, the cooldown and the
+    dust settling; a blow probed on EVERY frame of a roll, missing exactly
+    inside 0.04-0.26 and landing either side, while a drain and a slow land
+    straight through; a swing and a charge cut short, never the heavy, a swing
+    pressed mid-roll going off at its end, and a slow halving it. Then a real
+    guard: seen landing his blow with no roll, then missing the same blow
+    struck mid-roll against the wall, where the roll cannot carry the body out
+    of reach. Last, the host trusting a teammate's word that it is rolling, and
+    the teammate's picture kicking up its dust. It reads player.gd's numbers
+    off the live body's script, never by preload - this file compiles before
+    the autoloads exist, and player.gd names one.
   - `test_slam.gd` - the fourth archetype: that the ring draws the Touch
     shape's own reach (a retune that moves the hitbox and leaves the drawing
     behind is a bug nobody can see), that the wind-up telegraphs without

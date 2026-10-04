@@ -115,7 +115,11 @@ The host is the truth for everything but where a body is:
   one's colour, and an arc prefers and sets off only its thrower's.
 
 The game's own `WIRE` is 3 from here: a build from before the run was stamped
-with the host's time is refused rather than let into one.
+with the host's time is refused rather than let into one. It is 4 from the
+dodge: a body's step also says which way it is rolling and whether it is in the
+roll's untouchable stretch, and the host, which decides every blow on a remote
+body from a position a little old, takes its word - so a roll that worked on
+the roller's screen worked (game/player/CLAUDE.md's *The dodge*).
 
 **And the connection is ON SCREEN (M5)**, each piece picked from the Ping On
 Screen preview (https://claude.ai/artifact/CHLaYkvrXqXBwJMB3jj1YA) and built

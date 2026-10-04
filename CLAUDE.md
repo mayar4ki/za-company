@@ -218,6 +218,17 @@ that tightens as the charge fills (`game/player/charge_ring.gd`). The number is
 bounded by a RATIO and not by taste: the heavy's single-target rate must stay
 under the light combo's, which at 0.75 is 21.9/s against 28/s.
 
+**The dodge is a ROLL, on K - and on Ctrl, but never in a browser**, where
+Ctrl+W closes the tab (input_source.gd drops it from a web build). 48 px in
+0.32 s the way the stick points, backwards with it at rest; a blow MISSES the
+body from 0.04 to 0.26 s in, while a drain, a slow and a shove still land; 0.45 s
+to cool down after it ends; it cuts a light attack or a charge short but never
+the heavy, and a swing pressed mid-roll goes off as it ends. Its frames are the
+idle body moved about (`tools/roll_pose.gd`), built from each character's
+RECOLOURED sheet at bake time, so they are in no PNG. Online a body's step says
+it is rolling and the host trusts it (`WIRE` 4). Picked from the Dodge Lab
+preview: game/player/CLAUDE.md's *The dodge*, tests/test_dodge.gd.
+
 **The combo is three hits and the third is the ARC.** Swing 5, rising slash 7,
 then `attack3` - 12 to whatever the blade reaches, and lightning that jumps to
 the nearest untouched enemy within 40 px and once more from there, 5 each
@@ -455,7 +466,9 @@ each one owns - is tools/CLAUDE.md's *What every generator writes*. In short:
   `game/enemies/`, `game/npcs/` and `game/bosses/`, from `build_characters.gd`,
   `build_enemies.gd`, `build_npcs.gd` and `build_bosses.gd`. Each SLICES the
   sheet on disk; a sheet under a `src/` folder is seeded ONCE when missing and
-  is hand-owned art after that, never overwritten.
+  is hand-owned art after that, never overwritten. The one exception is the
+  cast's roll (rows 24-26), built from each recoloured sheet on every run and
+  never on disk.
 - **Rooms**: `game/levels/*/tileset.tres` and the doorways from
   `build_biomes.gd`; level scenes, doors and every prop scene from
   `build_levels.gd` (below), each prop painted by

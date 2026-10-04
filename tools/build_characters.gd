@@ -28,11 +28,11 @@ const SRC := "res://game/player/src/character_cc0.png"
 ## what sharing one constant would have prevented.
 const CAST_LAYOUT := {
 	"down": {"idle": 0, "walk": 1, "attack": 6, "attack2": 9,
-		"charge": 12, "heavy": 15, "wildfire": 18, "attack3": 21},
+		"charge": 12, "heavy": 15, "wildfire": 18, "attack3": 21, "dodge": 24},
 	"up": {"idle": 2, "walk": 3, "attack": 7, "attack2": 10,
-		"charge": 13, "heavy": 16, "wildfire": 19, "attack3": 22},
+		"charge": 13, "heavy": 16, "wildfire": 19, "attack3": 22, "dodge": 25},
 	"side": {"idle": 4, "walk": 5, "attack": 8, "attack2": 11,
-		"charge": 14, "heavy": 17, "wildfire": 20, "attack3": 23},
+		"charge": 14, "heavy": 17, "wildfire": 20, "attack3": 23, "dodge": 26},
 }
 const CAST_SPECS := {
 	"idle": {"frames": 1, "fps": 1.0, "loop": true},
@@ -43,6 +43,8 @@ const CAST_SPECS := {
 	"charge": {"frames": 2, "fps": 5.0, "loop": true},
 	"heavy": {"frames": 4, "fps": 14.0, "loop": false},
 	"wildfire": {"frames": 4, "fps": 14.0, "loop": false},
+	# The roll: four frames over player.gd's DODGE_SECONDS (0.32), 0.08 s each.
+	"dodge": {"frames": 4, "fps": 12.5, "loop": false},
 }
 
 ## The one row set this generator SEEDS rather than merely reads. The arc's
@@ -52,6 +54,14 @@ const CAST_SPECS := {
 ## enemies' rule for their sheets, applied to the one row set of the cast's
 ## that was not drawn by hand. Crop the sheet back to 21 rows to re-seed.
 const ArcPose := preload("res://tools/arc_pose.gd")
+
+## The one row set that is in NO sheet on disk. The dodge's three rows (24-26,
+## `dodge`) are the idle body moved about (tools/roll_pose.gd), built here from
+## each character's sheet AFTER its recolour, because the recolour reshapes:
+## curls and beards turned over with the ball are not the ones the Dodge Lab
+## preview showed, and recolour-then-roll is what it showed, pixel for pixel,
+## for all ten. Redraw an idle frame and its roll follows on the next run.
+const RollPose := preload("res://tools/roll_pose.gd")
 
 
 func _initialize() -> void:
@@ -67,6 +77,7 @@ func _initialize() -> void:
 			printerr("Could not load ", SRC)
 			quit(1)
 			return
+		sheet = RollPose.paint(sheet)
 		var out: String = entry["frames"]
 		var frames := Art.slice(sheet, CAST_LAYOUT, CAST_SPECS)
 		var err := ResourceSaver.save(frames, out)

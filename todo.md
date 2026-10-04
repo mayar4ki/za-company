@@ -13,7 +13,8 @@
         [ ] Still to watch in a real game: a teammate walking in place, then
             jumping ahead - messages arriving late. Note the corner ping
             when it happens
-    [ ] Dodge incoming attacks (Ctrl)
+    [x] Dodge incoming attacks - the tumble roll, on K (and Ctrl off the
+        web); its sound is still to be cut
     [ ] A dead player's camera follows the players still standing
     [ ] A teammate can revive a dead player, who gets up with 50% health
     [ ] Silverman's attacks hit harder - he is too weak now

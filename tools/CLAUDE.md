@@ -458,7 +458,13 @@ generator, and what each one owns.
                                        ONCE by way of tools/arc_pose.gd, on
                                        the enemies' rule: it paints them only
                                        while the sheet is too short to hold
-                                       them, and never overwrites a row
+                                       them, and never overwrites a row. Rows
+                                       24-26 (the dodge's roll) are in NO
+                                       sheet: tools/roll_pose.gd moves each
+                                       character's idle pixels about AFTER
+                                       its recolour, on every run, because
+                                       the recolour reshapes (game/player/
+                                       CLAUDE.md's *The dodge*)
 - `game/enemies/*/*_frames.tres`    <- tools/build_enemies.gd, see below
 - `game/npcs/*/*_frames.tres`      <- tools/build_npcs.gd: seeds
                                        game/npcs/<id>/src/<id>.png ONCE from
