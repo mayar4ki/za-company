@@ -198,7 +198,7 @@ func _one_blow(id: String, lands: bool, what: String) -> void:
 			_sprite_of(_m).animation == StringName(id + "_side"))
 	if _since == 60:
 		var hp := _hp()
-		_check("big mo: %s (%d)" % [what, hp], hp == (82 if lands else 100))
+		_check("big mo: %s (%d)" % [what, hp], hp == (78 if lands else 100))
 		_next()
 
 
@@ -206,7 +206,7 @@ func _one_blow(id: String, lands: bool, what: String) -> void:
 ## where he stands for the whole tell and only then runs, so a player who stays
 ## on his line is hit on arrival and one who steps off it a reaction time after
 ## the crouch is passed by - either way, though up is the longer step, his reach
-## being centred above his feet. 10 on MEDIUM.
+## being centred above his feet. 15 on MEDIUM.
 func _rush(step: Key) -> void:
 	var aside := step != KEY_NONE
 	if _since == 2:
@@ -230,7 +230,7 @@ func _rush(step: Key) -> void:
 				% ["up" if step == KEY_W else "down", _hp()], _hp() == 100)
 		else:
 			_check("big mo: stood on his line, the rush lands on arrival (%d)" % _hp(),
-				_hp() == 90)
+				_hp() == 85)
 		_next()
 
 
@@ -253,7 +253,7 @@ func _shell_hit() -> void:
 			_check("big mo: the counter cannot be mashed out of (commit %.2f)"
 				% _m.get("commit_fraction"), is_zero_approx(_m.get("commit_fraction")))
 		40:
-			_check("big mo: the counter lands 12 (%d)" % _hp(), _hp() == 88)
+			_check("big mo: the counter lands 15 (%d)" % _hp(), _hp() == 85)
 			_next()
 
 

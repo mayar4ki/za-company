@@ -6,7 +6,7 @@ extends "res://game/bosses/boss_base.gd"
 ## - **jab, jab, then the big one**, then a breath. The jabs are 0.25 s and 6
 ##   damage and are effectively uninterruptible - they are swings, so step out
 ##   and they whiff rather than being staggered out of him. The big one is the
-##   READ: a **hook** or an **uppercut**, both 0.7 s, both 18, both
+##   READ: a **hook** or an **uppercut**, both 0.7 s, both 22, both
 ##   interruptible, and they want opposite answers. The hook is wide and short
 ##   (his whole `Touch` circle), so you step BACK; the uppercut is narrow and
 ##   long (a lane straight out in front of him), so you step ASIDE. What tells
@@ -55,8 +55,15 @@ const Poses := preload("res://game/bosses/big_mo/poses.gd")
 ## MEDIUM numbers; the difficulty scale is applied by the base when chosen.
 ## The flurry's 4 is per punch, and the grace window eats most of the five:
 ## what the flurry takes is your position, not your health.
-const DAMAGE := {"jab": 6, "hook": 18, "uppercut": 18, "rush": 10,
-	"counter": 12, "clinch": 8, "flurry": 4}
+##
+## Measured against the office boy's 15, as Ahmed's are. Drawn when a guard hit
+## for 10 and raised on 2026-10-04 once it hit for 15: the finishers 18 -> 22,
+## so his heaviest sits between Ahmed's 20 and Silverman's 24, and the rush and
+## the counter 10 / 12 -> 15, so neither lands softer than the office boys on
+## his floor. The jab, the clinch and the flurry stay under the unit on
+## purpose - they are the rhythm and the footwork, not the blows.
+const DAMAGE := {"jab": 6, "hook": 22, "uppercut": 22, "rush": 15,
+	"counter": 15, "clinch": 8, "flurry": 4}
 
 ## The combination, run in order and then repeated. The last beat is a slot
 ## rather than a punch: `_finisher()` fills it with one of FINISHERS.

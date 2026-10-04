@@ -247,6 +247,22 @@ func _tick(frame: int) -> void:
 				(current_scene.get_node("Transition/Fade") as ColorRect).color.a < 0.01)
 			_player().global_position = Vector2(40, 180)
 			_key(KEY_A, true)
+			# THE WINDOW COSTS ITS BIGGEST BLOW, NOT ITS FIRST. A torch's 10
+			# opens it and a scrubber's 6 inside it is swallowed, as ever...
+			_player().call("take_damage", 10)
+			_player().call("take_damage", 6)
+		266:
+			# ...but a guard's 15 ten frames in lands the 5 the 10 left owing -
+			# the cheap hit is no shelter from the dear one - and a second 15
+			# is swallowed, because two blows of one size still cost one.
+			var window: float = _player().get("_grace_window")
+			_player().call("take_damage", 15)
+			_player().call("take_damage", 15)
+			_check("grace: the window costs its biggest blow, not its first (%s)"
+				% _player().get("health"), _player().get("health") == 85)
+			_check("grace: and runs on rather than restarting (%.2f of %.2f)"
+				% [float(_player().get("_grace")), window],
+				float(_player().get("_grace")) < window - 0.1)
 		346:
 			_check("collision: tiled left wall blocks the player (x=%.1f)"
 				% _player().global_position.x,

@@ -9,7 +9,11 @@ class_name PickupBase
 ## next time the room loads. Deliberate for now: rooms have no persistent
 ## state of any kind yet.
 
-@export var heal_amount := 25
+## 40, about two and a half of the office boy's 15 - what it was worth when it
+## was set at 25 against a guard that hit for 10. Raised on 2026-10-04 so the
+## heart kept pace when the blows went up; it does not scale with difficulty,
+## which is part of what makes HARD hard.
+@export var heal_amount := 40
 
 ## The sprite bobs, the node stays put: Y-sort and the collision shape read
 ## the node position, so only the drawing should move.

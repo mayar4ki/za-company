@@ -5,8 +5,9 @@ extends Node
 ## like every setting a default is applied but never saved.
 ##
 ## **Difficulty scales how hard the world hits, never how much health enemies
-## have.** Enemy HP (24 / 17 / 36) is a set of exact breakpoints on the player's
-## combo - dies in four hits, in three, in six, one-shot by the heavy - and a
+## have.** Enemy HP (24 / 17 / 36 / 48) is a set of exact breakpoints on the
+## player's 5 / 7 / 12 combo - a guard and a wraith die in three hits, a warden
+## in five, security in six, and the heavy one-shots the first two - and a
 ## multiplier would shred those into remainders on two of the three modes. So a
 ## guard on HARD dies exactly like a guard on EASY; what changes is what it
 ## costs you to be slow about it:

@@ -28,7 +28,7 @@ const BODY := 4.0
 ## the fire is in it.
 const SLACK := 6.0
 
-var damage := 14
+var damage := 15
 var _hit := {}
 
 

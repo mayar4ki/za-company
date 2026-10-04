@@ -205,8 +205,8 @@ func _shove(now: String, started: bool) -> void:
 	if now == "sweep" and _boss.get("phase") == 2 and not _note.has("hit"):
 		_note["hit"] = _since
 		_note["gap"] = _boss.global_position.distance_to(_player().global_position)
-		_check("moves: the sweep lands 12 (%s)" % _player().get("health"),
-			_player().get("health") == 88)
+		_check("moves: the sweep lands 15 (%s)" % _player().get("health"),
+			_player().get("health") == 85)
 		_check("moves: and kicks up dust where you skid", _child_of(ShoveDust) != null)
 	if _note.has("hit") and _since == _note["hit"] + 40:
 		var gap: float = _boss.global_position.distance_to(_player().global_position)

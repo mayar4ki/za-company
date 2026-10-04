@@ -6,7 +6,7 @@ extends "res://game/bosses/boss_base.gd"
 ##
 ## - **chop** and **sweep** alternate when you are in reach. Same reach, same
 ##   cycle, different telegraphs: the axe up behind his head, or dragged low
-##   behind him. 16 and 12 damage.
+##   behind him. 18 and 15 damage.
 ##   - The chop is a FISSURE: the blade bites the floor and a crack runs on
 ##     ahead of it, bursting into a row of fire pillars (fissure.gd, 8 more).
 ##     Backing straight off is the wrong answer; step to the side.
@@ -21,7 +21,7 @@ extends "res://game/bosses/boss_base.gd"
 ##   two seconds, and is a hop onto you; out of reach it is how he follows
 ##   someone who will not come to him. Get out of the ring.
 ## - **wave** is the RANGED one: in front of him and out of reach, three waves
-##   of fire go out in a fan (fan_wave.gd), 14 each. The safe ground is between
+##   of fire go out in a fan (fan_wave.gd), 15 each. The safe ground is between
 ##   two of them - sidestep a little, not a lot. Then a cooldown.
 ## - **chair** is THE ENORMOUS CHAIR, for whoever keeps away longest: three
 ##   seconds out of his reach and he sits down in it, spins it up for a second,
@@ -52,8 +52,18 @@ const ImpactStar := preload("res://game/bosses/ahmed/impact_star.gd")
 const ChairRun := preload("res://game/bosses/ahmed/chair_run.gd")
 
 ## MEDIUM numbers; the difficulty scale is applied by the base when chosen.
-const DAMAGE := {"chop": 16, "sweep": 12, "slam": 20, "wave": 14, "chair": 18}
-## The fissure's pillars, on top of the chop's own 16.
+##
+## Measured against the office boy's 15, which is the unit every blow in the
+## building is read against. These were drawn when a guard hit for 10 and were
+## left behind when it went to 15, so the sweep and the wave ended up softer
+## than the office boys he calls in. Raised on 2026-10-04 so nothing he swings
+## lands for less than they do: chop 16 -> 18, sweep 12 -> 15, wave 14 -> 15.
+## The slam stays his biggest at 20, under Big Mo's 22 and Silverman's 24, so
+## each boss's heaviest blow climbs on the one before.
+const DAMAGE := {"chop": 18, "sweep": 15, "slam": 20, "wave": 15, "chair": 18}
+## The fissure's pillars, on top of the chop's own 18 - the one number here
+## left under the unit, because they are what catches a player who already
+## stepped out of the axe.
 const FISSURE_DAMAGE := 8
 ## Melee attacks between slams.
 const SWINGS_PER_SLAM := 2

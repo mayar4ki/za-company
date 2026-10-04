@@ -111,13 +111,19 @@ func _thrown() -> void:
 				and (theirs["Props/IvansHeart1"][0] as Vector2).distance_to(heart.global_position) < 2.0)
 
 
+## Hurt by MORE than a heart (40). Two heads are two hearts, landing about 11
+## px apart, and a body stood on one is on both - so at a heart's worth exactly
+## whichever of the two is touched first fills the bar and the other is rightly
+## left lying for a player who is full, and which one that is, is the order the
+## physics server happens to report them in. Hurt past a heart, both are spent
+## whichever comes first.
 func _hurt() -> void:
 	_second().set("_grace", 0.0)
-	_second().call("take_damage", 30)
+	_second().call("take_damage", 60)
 	_expect("hearts: the guest has a heart's worth to take", "body", [_guest_id],
 		func(a: Array) -> bool:
 			_health = int(a[1]) if a.size() == 6 else 0
-			return a.size() == 6 and int(a[1]) <= 75)
+			return a.size() == 6 and int(a[1]) <= 60)
 
 
 func _heart_spent() -> void:

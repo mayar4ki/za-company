@@ -283,7 +283,8 @@ Two consequences worth keeping:
   Its loop is crossfaded over a 0.5 s seam, because a bed that plays from half
   health to the end of a fight is heard looping many times.
 
-Levels follow `DAMAGE` - 18 / 10 / 6 - so the fight sounds the way it hits:
+Levels follow `DAMAGE` - mixed at 18 / 10 / 6, now 22 / 15 / 6, the same
+order - so the fight sounds the way it hits:
 `hook_hit` -16 RMS, `rush_hit` -18.5, `jab_hit` -20, each telegraph about 7 dB
 under its own impact, and `hurt`/`stagger`/`concede` on Ahmed's exact numbers so
 the two bosses live in one mix. The fire bed sits at -34, where Ahmed's idle axe

@@ -203,7 +203,7 @@ room 3.0/s.
   `screen` (one white flash, on his layer 1 under the HUD). Its row is the
   glare's dim-and-rise with the impact frame HELD for the sweep, because the
   beam is his shine leaving him.
-- **the glass ceiling** (14, 0.95/1.20, third phase only, 4 s cooldown) - he
+- **the glass ceiling** (21, 0.95/1.20, third phase only, 4 s cooldown) - he
   looks up, and the shadows of the panes overhead spread across the floor
   round you: five squares by three, 40 x 28 each, centred on where you stood
   and moved off a wall rather than cut (`_aim_ceiling`). The checkerboard
@@ -232,10 +232,10 @@ room 3.0/s.
     and each row draws only its own runs of it. Checked with three bodies
     standing in the grid on and off the rug: shadows under all three, and
     over the rug and the boards alike.
-  - **14 is the preview's number, shipped as picked, and it is the one blow
-    still on the old scale.** The preview was drawn up against his old damage
-    the same afternoon the 2026-10-03 retune landed (glare 16 then); raised by
-    the same half it would be 21. Raising it is one number in `DAMAGE`.
+  - **It shipped at the preview's 14 and is now 21.** The preview was drawn
+    up against his old damage the same afternoon the 2026-10-03 retune landed
+    (glare 16 then), which left it the one blow on the old scale; it was
+    raised by the same half on 2026-10-04.
   `ceiling.gd` is three layers split by space like the glare and the prism:
   the rows (shadows, then the white of a landed pane and its cracks), `Air` at
   z 1 (the panes falling the last 0.12 s from 70 px up, grit off the ceiling,

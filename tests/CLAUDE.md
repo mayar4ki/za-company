@@ -17,7 +17,8 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     Never enters the game.
   - `test_flow.gd` - the journey through ONE room and the end of a run:
     select -> game -> movement -> pause -> zoom -> blow -> heart -> death ->
-    wall -> back to the menu -> a second run that spends every life -> game
+    a grace window that costs its biggest blow, not its first -> wall -> back
+    to the menu -> a second run that spends every life -> game
     over. The doors are test_chain.gd's.
   - `test_chain.gd` - the walk up the building: lobby to penthouse on foot
     through every door and one door back down, asserting each room's own
@@ -107,7 +108,7 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     stays on his line 70 px out, and misses one who steps up or down 0.40 s
     after it begins (a reaction, by `_key`, not a teleport);
     three quick hits shell him, a hit on the shell is blocked (no health off)
-    and countered for 12 by an attack that cannot be mashed out of, and a
+    and countered for 15 by an attack that cannot be mashed out of, and a
     shell waited out opens his guard to hits and does not come back inside its
     cooldown; pressed against him he clinches, costs 8 and throws you clear of
     his reach; raging, every other string is the flurry, the breath is 0.4,

@@ -42,7 +42,8 @@ match on `_ready`; an unknown saved id keeps the default look.
 
 The player owns its health (player.gd): `MAX_HEALTH`, `take_damage()`,
 `drain()`, `heal()`, `apply_slow()`, and a grace window after each hit during
-which the sprite blinks and further damage is ignored. Hazards, pickups and
+which the sprite blinks and no further blow costs more than the biggest one
+already taken (below). Hazards, pickups and
 enemies reach the player by the `player` group + `has_method`, never by type.
 
 **Four ways the world reaches the player, and the splits between them are the
@@ -54,7 +55,15 @@ at spawn) because it is secretly the CROWD dial: a guard's full attack cycle is
 0.8s, so a grace of 0.8 (EASY) swallows every extra guard's strikes and N
 enemies hit like one, 0.5 (MEDIUM) lets a pair interleave, and 0.4
 (HARD) lets a third find gaps too. Retuning it retunes every hazard and enemy
-at once. A
+at once. **A window costs its BIGGEST blow, not its first**: a bigger blow
+landing inside one deals the difference and the window runs on, while one the
+same size or smaller is swallowed. First-come was the rule until 2026-10-04,
+and it let a cheap hit shelter you from a dear one - a torch presses its 10
+every frame, so standing in it held the window open for good and in a crowd
+of guards the fire was the SAFE place to stand. Two blows of one size still
+cost one, so the crowd cap above is unchanged. A window that no blow opened -
+getting up off the floor (*Picking somebody up*) - swallows everything, as
+before. A
 *drain* (`drain()`) is continuous harm that already knows its own rate - an
 aura, a poison - and sits outside the grace window in both directions: never
 blocked by one, never opens one. Routing a drain through `take_damage()` is the
@@ -709,7 +718,9 @@ tick, so `die` lives in `_lose_health()` rather than in `take_damage()`: a
 drain that kills you has to kill you as audibly as a blow does.
 
 `hurt` is metered for free, because `take_damage()` already is - the grace
-window stops a crowd stacking gasps without a line of audio code. It fires
+window stops a crowd stacking gasps without a line of audio code. (A blow
+bigger than the one that opened the window tops it up and gasps again, which
+is right: it did land, and only a strictly bigger blow can, so it is rare.) It fires
 only on a blow that was SURVIVED, since `_lose_health` plays `die` at zero and
 a gasp laid over the death breath in one frame is one muddy sound rather than
 two clear ones.

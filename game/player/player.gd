@@ -9,7 +9,7 @@ const ACCELERATION := 900.0
 ## dance out of a guard's finish, which the grace window and the interrupt
 ## tuning both assume. The stick also steers: facing follows it mid-attack and
 ## the hitbox re-parks (see _turn_attack). The charge stance and the heavy stay
-## rooted - the heavy's ~1.9 rooted seconds are part of its damage maths.
+## rooted - the heavy's ~1.3 rooted seconds are part of its damage maths.
 const ATTACK_SLIDE := 0.35
 const FRICTION := 1100.0
 const MAX_HEALTH := 100
@@ -45,10 +45,11 @@ const COMBO_GRACE_SECONDS := 0.2
 ## Damage the heavy attack - the charged spin plus its wildfire - deals to
 ## EVERY enemy inside the Spinbox circle. Exactly a regular's health on purpose:
 ## an AoE that does not KILL the basic enemy thins no crowd and so never repays
-## the ~1.9 rooted seconds it costs - at 15 it was strictly the wrong button.
+## the ~1.3 rooted seconds it costs - at 15 it was strictly the wrong button.
 ## At 24 it one-shots a guard and a wraith while its single-target rate
-## (~15.6/s counting the entry swing) stays below the light combo's 21, so the
-## combo is still right against one enemy and the heavy right against a crowd.
+## (21.9/s counting the entry swing - see CHARGE_SECONDS) stays below the light
+## combo's 28, so the combo is still right against one enemy and the heavy right
+## against a crowd.
 const HEAVY_POWER := 24
 ## How long the attack button must be HELD before the heavy goes off - counted
 ## from the press, not from the swing's end, and it fires itself the moment it
@@ -80,6 +81,8 @@ const CHARGE_SECONDS := 0.75
 ## also the crowd dial, which is why difficulty owns it: a guard's attack cycle
 ## is 0.8s, so grace at 0.8 (EASY) means extra guards' strikes are swallowed and
 ## N enemies hit like one, while 0.5 (HARD) lets a crowd interleave.
+##
+## A window costs its BIGGEST blow, not its first - see take_damage().
 var _grace_window := 0.8
 ## Floor on how far a slow may go. Below roughly this the player is not really
 ## playing any more, and no combination of sources should get there.
@@ -315,6 +318,9 @@ var _charge := 0.0
 ## placed in player.tscn because it exists only for the length of a stance.
 var _ring: Node2D = null
 var _grace := 0.0
+## The biggest blow the open grace window has cost so far - what a bigger one
+## landing inside it is topped up from (take_damage()).
+var _grace_blow := 0
 ## The newest number a drain put up, which later ticks add to while it lasts -
 ## see damage_number.gd. A blow never touches it: a blow is its own number.
 var _drain_number: Node2D = null
@@ -1250,12 +1256,32 @@ func _world_reaches() -> bool:
 ## decided here, on the host, and the rest of the party hears of it (`reached`):
 ## the owner to blink and carry it, everybody else to see it land.
 ##
+## **A window costs its BIGGEST blow, not its first.** A blow landing inside an
+## open window that is bigger than everything the window has cost so far deals
+## the difference, and the window runs on rather than restarting. Before this,
+## first-come won: a torch presses its 10 on every frame, so standing in one
+## held the window open for good and no guard's 15 or slam's 20 could land -
+## in a crowd the fire was the SAFE place to stand. A scrubber's bump or a
+## surge's pass bought the same shelter by accident. Two blows of one size
+## still cost one, so the crowd cap the window is for has not moved.
+##
 ## A body in the untouchable stretch of a roll takes nothing and opens no window:
 ## the blow simply missed. A remote body's roll is its owner's word for it.
 func take_damage(amount: int) -> void:
-	if not _world_reaches() or _grace > 0.0 or health <= 0 or untouchable():
+	if not _world_reaches() or health <= 0 or untouchable():
+		return
+	if _grace > 0.0:
+		if amount <= _grace_blow:
+			return
+		var extra := amount - _grace_blow
+		_grace_blow = amount
+		_lose_health(extra)
+		# What is LEFT of the window, so the owner's blink runs on with it.
+		reached.emit("struck", [extra, _grace])
+		_struck(extra)
 		return
 	_grace = _grace_window
+	_grace_blow = amount
 	_lose_health(amount)
 	reached.emit("struck", [amount, _grace_window])
 	_struck(amount)
@@ -1482,6 +1508,9 @@ func get_up(amount: int, grace: float, toward: Vector2) -> void:
 	remove_from_group(FALLEN_GROUP)
 	_belong()
 	_grace = grace
+	# A window no blow opened, and it swallows them all as it always did: no
+	# blow in the game is a whole bar, so nothing can top up past this one.
+	_grace_blow = MAX_HEALTH
 	_facing = Facing.SIDE
 	_facing_left = toward.x < global_position.x
 	_sprite.flip_h = _facing_left

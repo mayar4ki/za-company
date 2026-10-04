@@ -189,9 +189,9 @@ func _tick(frame: int) -> void:
 		if into == 2:
 			_ceiling_health = _player().get("health")
 		elif into == 110:
-			_check("silverman: stand still and the second wave lands its 14, once (%s -> %s)"
+			_check("silverman: stand still and the second wave lands its 21, once (%s -> %s)"
 				% [_ceiling_health, _player().get("health")],
-				_ceiling_health - int(_player().get("health")) == 14)
+				_ceiling_health - int(_player().get("health")) == 21)
 			_check("silverman: and that was his second ceiling (%d)" % _sv.get("ceiling_casts"),
 				int(_sv.get("ceiling_casts")) == 2)
 			# Out of his sight again, so nothing else lands before the concede.

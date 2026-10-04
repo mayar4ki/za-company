@@ -70,10 +70,10 @@ const Ceiling := preload("res://game/bosses/silverman/ceiling.gd")
 ## crossing 18). Every big blow he has is now a heavy's worth - 24 - and the
 ## copy, the one that homes, stays the smaller number.
 ##
-## The glass ceiling is the preview's 14, shipped as picked. The preview was
-## drawn up against his old numbers the same afternoon they were raised, so it
-## is the one blow still on the old scale; raised by the same half it would be 21.
-const DAMAGE := {"glare": 24, "split": 18, "prism": 24, "ceiling": 14}
+## The glass ceiling shipped at the preview's 14, which was drawn up against his
+## old numbers the same afternoon they were raised - the one blow left on the
+## old scale. Raised by the same half to 21 on 2026-10-04.
+const DAMAGE := {"glare": 24, "split": 18, "prism": 24, "ceiling": 21}
 const DASH_DAMAGE := 24
 
 ## How much of a wind-up can still be interrupted, by phase, and how long an

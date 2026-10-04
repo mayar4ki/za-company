@@ -106,7 +106,7 @@ const BIOME := {
 	# FOUR KNOTS, not four boys one to a quadrant. This is the crowd floor and
 	# the one that teaches the heavy, and the old arrangement could not teach
 	# it: one body per corner meant no point in the room stood inside two sight
-	# radii, so the sword was always the right answer and the ~1.9 rooted
+	# radii, so the sword was always the right answer and the ~1.3 rooted
 	# seconds the heavy costs never bought anything. An AoE needs a crowd to be
 	# an argument.
 	#

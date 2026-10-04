@@ -213,7 +213,9 @@ The player owns its health; the lives (`MAX_LIVES` 3) are the party's single
 pool on game.gd. **Four ways the
 world reaches it, and the splits are the thing to get right**: a *blow*
 (`take_damage()`) is metered by the grace window and opens one - that window is
-per-difficulty and is secretly the CROWD dial; a *drain* (`drain()`) knows its
+per-difficulty and is secretly the CROWD dial, and it costs its BIGGEST blow
+rather than its first, so a cheap hit (a torch, a scrubber) can never shelter
+you from a dear one; a *drain* (`drain()`) knows its
 own rate and sits outside the window in both directions - never blocked by one,
 never opens one; a *status* (`apply_slow()`) is something the player carries
 that expires on its own, refreshing rather than compounding; and a *shove*

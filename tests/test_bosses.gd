@@ -77,8 +77,8 @@ func _tick(frame: int) -> void:
 		if _wave_at < 0 and now == "slam" and _boss.get("phase") == 2:
 			_check("bosses: chop, then sweep, then the slam (%s)" % str(_seq),
 				_seq == ["chop", "sweep", "slam"])
-			_check("bosses: sweep 12 and slam 20 have landed (%s)" % _player().get("health"),
-				_player().get("health") == 52)
+			_check("bosses: chop 18, sweep 15 and slam 20 have landed (%s)"
+				% _player().get("health"), _player().get("health") == 47)
 			_check("bosses: the slam hits everyone in the ring - the office boy too (%s)"
 				% _boy.get("health"), _boy.get("health") == 4)
 			_wave_at = frame
@@ -90,9 +90,9 @@ func _tick(frame: int) -> void:
 			_check("bosses: out of reach in the lane, he sends the wave (%s from %d)"
 				% [str(_seq), _seq_at_wave],
 				_seq.size() > _seq_at_wave and _seq[_seq_at_wave] == "wave")
-			_check("bosses: the wave lands 14 at 60 px (%s -> %s)"
+			_check("bosses: the wave lands 15 at 60 px (%s -> %s)"
 				% [_health_before_wave, _player().get("health")],
-				_player().get("health") == _health_before_wave - 14)
+				_player().get("health") == _health_before_wave - 15)
 			# Back into his reach, so the next thing he throws is the axe and
 			# the interrupt below has a swing to catch - left at range he would
 			# leap the gap the moment the cooldown let him.
@@ -169,8 +169,8 @@ func _tick(frame: int) -> void:
 				% _loop_mode_of(snd, "breath"),
 				_loop_mode_of(snd, "breath") == AudioStreamWAV.LOOP_DISABLED)
 		100:
-			_check("bosses: the chop lands 16 (%s)" % _player().get("health"),
-				_player().get("health") == 84)
+			_check("bosses: the chop lands 18 (%s)" % _player().get("health"),
+				_player().get("health") == 82)
 		560:
 			_check("bosses: an early hit on a wind-up staggers him (hit at %d, phase after %d)"
 				% [_interrupted_at, _phase_after_interrupt],
@@ -260,8 +260,8 @@ func _tick(frame: int) -> void:
 
 		# ---- Big Mo. Same room, cleared: his fight is a RHYTHM, so what is
 		# checked here is the ORDER he throws in, not the frame each punch
-		# lands on. The player is healed first because Ahmed left them at 38
-		# and a hook is 18 - a death mid-suite would respawn them elsewhere.
+		# lands on. The player is healed first because Ahmed left them hurt
+		# and a hook is 22 - a death mid-suite would respawn them elsewhere.
 		570:
 			# Guarded: the office boy has usually been killed by Ahmed's second
 			# slam by now and freed itself, and an unguarded queue_free on it
