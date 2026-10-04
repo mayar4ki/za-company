@@ -85,6 +85,10 @@ func _physics_process(delta: float) -> void:
 ## opens the grace window, and a player killed by this should die where they
 ## were hit rather than be thrown by a corpse's worth of momentum.
 func _touch_strike(player: Node2D) -> void:
+	# A slam the roll made miss throws nobody either: the push is half of this
+	# blow, not a second thing that happened to land on the same frame.
+	if _untouchable(player):
+		return
 	if player.has_method("take_damage"):
 		player.call("take_damage", contact_damage)
 	if player.has_method("shove"):

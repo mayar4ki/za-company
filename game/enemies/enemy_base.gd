@@ -912,11 +912,13 @@ func _strike() -> void:
 	var landed := false
 	for body in _touch_area.get_overlapping_bodies():
 		if body.is_in_group("player"):
-			landed = true
+			if not _untouchable(body):
+				landed = true
 			_touch_strike(body)
 	# Only a blow that found somebody. A swing through empty air already said
 	# everything it had to say on the wind-up, and an impact with nothing under
-	# it teaches the player that the sound does not mean they were hit.
+	# it teaches the player that the sound does not mean they were hit - which
+	# is why a body the roll carried through it does not count either.
 	#
 	# Bosses pass through here without a word: theirs are named after the
 	# attack (`chop_hit`), so `hit` is an id no boss owns and the call is one
@@ -931,6 +933,15 @@ func _strike() -> void:
 func _touch_strike(player: Node2D) -> void:
 	if player.has_method("take_damage"):
 		player.call("take_damage", contact_damage)
+
+
+## Whether a blow on `body` would miss it now: a player in the untouchable
+## stretch of a roll (player.gd's `untouchable()`). Asked by whatever comes
+## WITH a blow - the push a slam or a sweep throws misses along with it - and
+## by an attack that hits each body once, which must not count a body it
+## missed as hit, or one roll would spend the whole attack.
+func _untouchable(body: Node) -> bool:
+	return body.has_method("untouchable") and bool(body.call("untouchable"))
 
 
 ## Whether this type uses the wind-up cycle at all. The wraith opts out: it

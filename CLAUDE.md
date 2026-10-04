@@ -238,7 +238,12 @@ under the light combo's, which at 0.75 is 21.9/s against 28/s.
 **The dodge is a ROLL, on K or Z, the same on every build** - never Ctrl,
 because in a browser Ctrl+W closes the tab and no page can stop it. 48 px in
 0.32 s the way the stick points, backwards with it at rest; a blow MISSES the
-body from 0.04 to 0.26 s in, while a drain, a slow and a shove still land; 0.45 s
+body from 0.04 to 0.26 s in, while a drain, a slow and a shove with no blow
+behind it (a scrubber) still land. **A blow is all of itself**: the push that
+comes WITH one - a slam, a sweep, a heave, a flurry punch - misses with it,
+and an attack that hits each body once never counts a body it missed, so a
+roll carries you THROUGH a lingering lane rather than spending it - both ask
+the player's `untouchable()`, never its health; 0.45 s
 to cool down after it ends; it cuts a light attack or a charge short but never
 the heavy, and a swing pressed mid-roll goes off as it ends. Its frames are the
 idle body moved about (`tools/roll_pose.gd`), built from each character's

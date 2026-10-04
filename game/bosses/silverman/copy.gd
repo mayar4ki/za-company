@@ -91,6 +91,11 @@ func _walk(delta: float) -> void:
 		return
 	if _spent or not player.has_method("take_damage"):
 		return
+	# Rolling through it is not being reached by it: it is spent on a blow that
+	# can land, so it keeps coming for the rest of its walk (player.gd's
+	# `untouchable()`).
+	if player.has_method("untouchable") and bool(player.call("untouchable")):
+		return
 	_spent = true
 	player.call("take_damage", _damage)
 

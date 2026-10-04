@@ -19,6 +19,12 @@ extends "res://tests/helpers.gd"
 ## - a real guard's blow, landing on a roll pinned against the wall where it
 ##   cannot carry the body out of reach, misses - after the same guard was
 ##   seen landing one with no roll;
+## - a blow is all of itself: a security guard's slam that lands throws the
+##   body, and the same slam on a pinned roll neither hurts nor throws it, while
+##   a push with no blow behind it still reaches a rolling body;
+## - an attack that hits each body once does not count a body it missed: a
+##   fan-wave lane the roll lay in burns it once the untouchable stretch is
+##   over, and only once;
 ## - online, the host trusts a teammate's word that it is rolling, and the
 ##   teammate's picture kicks up the same dust here and makes the same sound.
 ##
@@ -45,6 +51,7 @@ var _ended := -1
 var _flag := false
 var _samples: Array = []
 var _guard: Node2D = null
+var _wave: Node2D = null
 var _prog := 0.0
 var _health := 0
 var _said := 0
@@ -90,6 +97,12 @@ func _tick(frame: int) -> void:
 		10:
 			_guard_misses(frame, t)
 		11:
+			_slam_lands(frame, t)
+		12:
+			_slam_misses(frame, t)
+		13:
+			_lane(frame, t)
+		14:
 			_stage += 1
 			_teammate()
 			_finish()
@@ -298,6 +311,12 @@ func _probe(frame: int, t: int) -> void:
 				is_equal_approx(float(p.get("slow_factor")), 0.5))
 			p.set("slow_factor", 1.0)
 			p.set("slow_seconds", 0.0)
+			# A scrubber's push: no blow behind it, so nothing to miss with.
+			p.call("shove", Vector2.RIGHT, 40.0)
+			_check("probe: and so does a push with no blow behind it (%.2f s)"
+				% float(p.get("_shove_seconds")), float(p.get("_shove_seconds")) > 0.0)
+			p.set("_shove", Vector2.ZERO)
+			p.set("_shove_seconds", 0.0)
 	elif t == 28:
 		var inside := _samples.filter(func(s: Array) -> bool:
 			return s[0] >= _c("DODGE_SAFE_FROM") and s[0] <= _c("DODGE_SAFE_UNTIL"))
@@ -484,6 +503,131 @@ func _guard_misses(frame: int, t: int) -> void:
 		_key(KEY_W, false)
 		_next(frame)
 	_prog = prog
+
+
+# ---- A blow is all of itself --------------------------------------------------
+
+
+## The control: a security guard beside the pinned player slams, and the slam
+## both hurts and throws - so the next stage's clean miss is the roll's.
+func _slam_lands(frame: int, t: int) -> void:
+	var p := _player()
+	if t == 1:
+		_place(WALL)
+		p.set("_grace", 0.0)
+		_guard = (load("res://game/enemies/security/security.tscn") as PackedScene).instantiate()
+		_level().get_node("Props").add_child(_guard)
+		_guard.global_position = WALL + Vector2(20, 4)
+		_guard.set("speed", 0.0)
+		_health = int(p.get("health"))
+		_prog = 0.0
+	elif t > 1:
+		var prog := float(_guard.call("_windup_progress"))
+		if _prog > 0.5 and prog == 0.0:
+			_check("slam: with no roll it hurts (%d -> %d) and throws (%.2f s)"
+				% [_health, int(p.get("health")), float(p.get("_shove_seconds"))],
+				int(p.get("health")) < _health and float(p.get("_shove_seconds")) > 0.0)
+			_next(frame)
+		elif t > 200:
+			_check("slam: wound up and struck", false)
+			_next(frame)
+		_prog = prog
+
+
+## The same slam on a roll pointed into the wall, pressed late in the wind-up:
+## the body is still in the ring as it lands, and the roll makes ALL of the
+## blow miss - no damage and no throw.
+func _slam_misses(frame: int, t: int) -> void:
+	var p := _player()
+	if t == 1:
+		# The control's throw carried the body out of the ring.
+		_place(WALL)
+		p.set("_shove", Vector2.ZERO)
+		p.set("_shove_seconds", 0.0)
+		_prog = 0.0
+		return
+	var prog := float(_guard.call("_windup_progress"))
+	if not _flag and float(p.get("_grace")) == 0.0 and prog >= 0.85:
+		_flag = true
+		_y0 = p.global_position.y
+		_health = int(p.get("health"))
+		_key(KEY_W, true)
+		_tap(KEY_K, frame)
+	elif _flag and _ended < 0 and _prog > 0.5 and prog == 0.0:
+		_ended = frame
+		var at := float(p.get("_dodge_t"))
+		_check("slam: struck mid-roll, it neither hurts (%d -> %d) nor throws (%.2f s), %.3f s in"
+			% [_health, int(p.get("health")), float(p.get("_shove_seconds")), at],
+			int(p.get("health")) == _health and float(p.get("_shove_seconds")) == 0.0
+			and at >= _c("DODGE_SAFE_FROM") and at <= _c("DODGE_SAFE_UNTIL"))
+		_check("slam: and the roll was still in the ring (%.2f px from the wall)"
+			% (p.global_position.y - _y0), absf(p.global_position.y - _y0) < 1.5)
+		_key(KEY_W, false)
+	elif _ended > 0 and frame == _ended + 2:
+		_guard.queue_free()
+		_next(frame)
+	elif t > 300:
+		_check("slam: wound up again for the roll", false)
+		_key(KEY_W, false)
+		_next(frame)
+	_prog = prog
+
+
+## Ahmed's fan wave, built by hand with the pinned roll lying in its middle
+## lane from the first frame: nothing while the roll is untouchable, then the
+## lane burns it once the stretch is over - once, since the lane hits each body
+## once. Counting the missed touch as a hit would leave it standing in the fire
+## untouched for the rest of the wave.
+func _lane(frame: int, t: int) -> void:
+	var p := _player()
+	if t == 1:
+		_place(WALL)
+		p.set("_grace", 0.0)
+		_health = int(p.get("health"))
+		_samples.clear()
+	elif not _flag:
+		# The slam's roll is still going, or cooling down: a press now would be
+		# refused, and the wave would be timed off THAT roll's clock.
+		if not _rolling() and float(p.get("_dodge_cooldown")) == 0.0:
+			_flag = true
+			_key(KEY_W, true)
+			_tap(KEY_K, frame)
+		elif t > 120:
+			_check("lane: the slam's roll ended and cooled down", false)
+			_next(frame)
+	elif _wave == null:
+		if float(p.get("_dodge_t")) >= 0.08:
+			# Its origin is 13 px ahead of the anchor; the body stands 20 px down
+			# the middle lane, where the front (14 + 6 of slack) already is.
+			_wave = (load("res://game/bosses/ahmed/fan_wave.gd") as GDScript).new()
+			_wave.set("boss", _level())
+			_wave.set("anchor", p.global_position - Vector2(33, 0))
+			_wave.set("dir", 1.0)
+			_wave.set("damage", 14)
+			_level().add_child(_wave)
+			_ended = frame
+		elif t > 180:
+			_check("lane: the roll started", false)
+			_key(KEY_W, false)
+			_next(frame)
+	elif frame > _ended:
+		var at := float(p.get("_dodge_t"))
+		_samples.append([at, int(p.get("health"))])
+		if frame == _ended + 70:
+			_key(KEY_W, false)
+			var inside := _samples.filter(func(s: Array) -> bool:
+				return s[0] >= 0.0 and s[0] <= _c("DODGE_SAFE_UNTIL"))
+			var after := _samples.filter(func(s: Array) -> bool:
+				return s[0] < 0.0 or s[0] > _c("DODGE_SAFE_UNTIL"))
+			# Most of the stretch, not a sliver of it: the wave lands at 0.08 s in.
+			_check("lane: nothing while the roll is untouchable (%d frames)" % inside.size(),
+				inside.size() >= 5 and inside.all(func(s: Array) -> bool: return s[1] == _health))
+			_check("lane: then the lane it lay in burns it, once (%d -> %d)"
+				% [_health, int(p.get("health"))],
+				not after.is_empty() and int(p.get("health")) == _health - 14)
+			_wave.queue_free()
+			p.call("revive")
+			_next(frame)
 
 
 # ---- Online ------------------------------------------------------------------

@@ -325,10 +325,11 @@ func _strike() -> void:
 
 
 ## The clinch's blow is a heave: hurt, then carried away from him. The shove is
-## HELD by `_carry_throw` - one is 17 px, which is a nudge and not a throw.
+## HELD by `_carry_throw` - one is 17 px, which is a nudge and not a throw. A
+## heave the roll made miss carries nobody: the throw is part of the blow.
 func _touch_strike(player: Node2D) -> void:
 	super(player)
-	if attack == "clinch" and player.has_method("shove"):
+	if attack == "clinch" and player.has_method("shove") and not _untouchable(player):
 		var away := player.global_position - global_position
 		if away.length() < 0.5:
 			away = Vector2(_dir(), 0.0)
@@ -642,10 +643,13 @@ func _run_flurry() -> void:
 
 ## One straight punch: whoever stands in front of him, inside a jab's reach,
 ## is hit and shoved back. The grace window decides how many of the five hurt;
-## every one of them pushes.
+## every one that reaches you pushes, and one a roll made miss neither hurts
+## nor pushes.
 func _flurry_punch() -> void:
 	_sfx("flurry_hit")
 	for body in _in_lane(FLURRY_REACH, FLURRY_HALF_WIDTH):
+		if _untouchable(body):
+			continue
 		if body.has_method("take_damage"):
 			body.call("take_damage", contact_damage)
 		if body.has_method("shove"):

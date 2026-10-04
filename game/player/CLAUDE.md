@@ -549,9 +549,29 @@ blow that missed opens no window, while `drain()`, `apply_slow()` and
 `shove()` reach a rolling body exactly as they reach a standing one - the
 wraith's drain is the one harm designed to have no timing answer, and a roll
 must not become one. The first frames are open on purpose: a roll pressed as
-the blow lands is too late. **`DODGE_COOLDOWN` (0.45) runs from the END of a
-roll**, because rolls that chain would be a second grace window, and the grace
-window is the crowd dial (*Health*, above).
+the blow lands is too late. (An enemy reads the roll's clock as of the frame
+before, so measured against a real strike the stretch is 0.05 to 0.27 s - a
+press 4 to 16 frames ahead of the blow.) **`DODGE_COOLDOWN` (0.45) runs from
+the END of a roll**, because rolls that chain would be a second grace window,
+and the grace window is the crowd dial (*Health*, above).
+
+**A blow is all of itself, and the roll answers all of it.** Two things ride
+on a blow besides its damage, and both ask `untouchable()` - public for this
+reason - rather than guessing from health, which a grace window would fool:
+
+- **The push that comes WITH a blow misses with it**: the security guard's
+  slam (brute_base.gd), Ahmed's sweep, Big Mo's heave and every flurry punch.
+  Being thrown by a blow you rolled clear of reads as the roll not working. A
+  push with no blow behind it - the hub's scrubbers - never asks, and lands on
+  a rolling body as the paragraph above says.
+- **An attack that hits each body ONCE never counts a body it missed as hit**:
+  Ahmed's fissure, fan wave and chair, Silverman's glare (its burst, band and
+  arms), his crossing and his copy. Counted, one roll that caught the first
+  touch spent the whole attack, so you could roll into a lane and stand in it.
+  Not counted, a lane you are still standing in burns you once the stretch is
+  over: the roll carries you THROUGH an attack, never makes you immune to it.
+  The ones that skip a rolling body are `enemy_base.gd`'s and `fx_node.gd`'s
+  `_untouchable()`, and the copy asks inline.
 
 **What it does to the attack button.** It cuts a swing, a slash or an arc
 short (what the blade already hit stays hit, and the combo's window closes),

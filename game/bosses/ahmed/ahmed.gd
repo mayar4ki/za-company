@@ -384,7 +384,8 @@ func _strike() -> void:
 ## feet, with the dust kicked up where you skid.
 func _touch_strike(player: Node2D) -> void:
 	super(player)
-	if attack == "sweep" and player.has_method("shove"):
+	# A sweep the roll made miss pushes nobody: the push is part of the blow.
+	if attack == "sweep" and player.has_method("shove") and not _untouchable(player):
 		player.call("shove", player.global_position - global_position, SHOVE_FORCE)
 		_spawn_fx(ShoveDust, global_position, true, {"victim": player})
 
@@ -574,7 +575,10 @@ func _chair_step(delta: float) -> void:
 	_charge_t += delta
 	var bump := move_and_collide(_chair_dir * CHAIR_SPEED * delta)
 	for body in _touch_area.get_overlapping_bodies():
-		if body != self and body.has_method("take_damage") and not _chair_hit.has(body):
+		# A body rolling clear is not counted as hit, so a roll has to carry it
+		# out of the chair's way rather than merely be rolling as it arrives.
+		if body != self and body.has_method("take_damage") and not _chair_hit.has(body) \
+				and not _untouchable(body):
 			_chair_hit[body] = true
 			body.call("take_damage", contact_damage)
 	if bump != null or _charge_t >= Poses.chair_charge_seconds():

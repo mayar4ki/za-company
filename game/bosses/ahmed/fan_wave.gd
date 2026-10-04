@@ -47,7 +47,7 @@ func _tick(_delta: float) -> void:
 	var d := _front()
 	var origin := anchor + Vector2(ORIGIN * dir, 0.0)
 	for body in _targets():
-		if _hit.has(body):
+		if _hit.has(body) or _untouchable(body):
 			continue
 		var rel: Vector2 = body.global_position - origin
 		var fwd := rel.x * dir

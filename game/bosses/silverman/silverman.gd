@@ -462,7 +462,8 @@ func _strike() -> void:
 ## place to be is the obvious reading of it.
 func _flash_at_source() -> void:
 	for body in _touch_area.get_overlapping_bodies():
-		if body == self or _glare_hit.has(body) or not body.has_method("take_damage"):
+		if body == self or _glare_hit.has(body) or not body.has_method("take_damage") \
+				or _untouchable(body):
 			continue
 		_glare_hit[body] = true
 		body.call("take_damage", contact_damage)
@@ -484,7 +485,8 @@ func glare_front(since: float) -> float:
 func _glare_reach(front: float) -> void:
 	_band.position.x = -front if _facing_left else front
 	for body in _band.get_overlapping_bodies():
-		if body == self or _glare_hit.has(body) or not body.has_method("take_damage"):
+		if body == self or _glare_hit.has(body) or not body.has_method("take_damage") \
+				or _untouchable(body):
 			continue
 		if _forward_of(body) <= front + GLARE_SLACK:
 			_glare_hit[body] = true
@@ -505,7 +507,8 @@ func glare_arm_front(since: float) -> float:
 func _glare_reach_arm(area: Area2D, dy: float, front: float) -> void:
 	area.position.y = GLARE_LANE_Y + dy * front
 	for body in area.get_overlapping_bodies():
-		if body == self or _glare_hit.has(body) or not body.has_method("take_damage"):
+		if body == self or _glare_hit.has(body) or not body.has_method("take_damage") \
+				or _untouchable(body):
 			continue
 		var along: float = (body.global_position.y + GLARE_BODY_Y
 			- (global_position.y + GLARE_LANE_Y)) * dy
@@ -801,7 +804,8 @@ func _dash_step(delta: float) -> void:
 func _pass_through() -> void:
 	for node in get_tree().get_nodes_in_group("player"):
 		var player := node as Node2D
-		if player == null or _dash_hits.has(player) or not player.has_method("take_damage"):
+		if player == null or _dash_hits.has(player) or not player.has_method("take_damage") \
+				or _untouchable(player):
 			continue
 		if player.global_position.distance_to(global_position) > dash_reach:
 			continue

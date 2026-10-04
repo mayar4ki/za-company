@@ -118,8 +118,18 @@ The game's own `WIRE` is 3 from here: a build from before the run was stamped
 with the host's time is refused rather than let into one. It is 4 from the
 dodge: a body's step also says which way it is rolling and whether it is in the
 roll's untouchable stretch, and the host, which decides every blow on a remote
-body from a position a little old, takes its word - so a roll that worked on
-the roller's screen worked (game/player/CLAUDE.md's *The dodge*).
+body from a position a little old, takes its word - so a roll that carried a
+body clear, or pinned it against a wall in its untouchable stretch, counts on
+the host as well (game/player/CLAUDE.md's *The dodge*). **It does not make the
+TIMING the roller's**, and that is still open: a guest sees every enemy
+`DELAY` (0.1 s) behind the host's clock, and its roll reaches the host one
+trip and up to one step (1/30 s) after it starts. So against the blow as DRAWN
+on a guest, a roll has to be pressed 0.1 s + a trip + up to a step earlier
+than solo - about 0.2 to 0.42 s ahead of it on a 50 ms trip, against 0.05 to
+0.27 s solo - which on a guard's 0.45 s wind-up means inside its first quarter
+second. The fix would be the host judging a blow on a remote body against
+that body's word from when the GUEST saw it land, which is a rewind and not a
+flag.
 
 **And the connection is ON SCREEN (M5)**, each piece picked from the Ping On
 Screen preview (https://claude.ai/artifact/CHLaYkvrXqXBwJMB3jj1YA) and built

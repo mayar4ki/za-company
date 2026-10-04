@@ -49,3 +49,12 @@ func _targets() -> Array:
 					and not out.has(body):
 				out.append(body)
 	return out
+
+
+## Whether a blow on `body` would miss it now - a player rolling (player.gd's
+## `untouchable()`). An effect that hits each body once skips such a body
+## WITHOUT counting it as hit, so a lane or a pillar it rolled into still burns
+## it once the roll's stretch is over: a roll carries you through, it does not
+## spend the attack.
+func _untouchable(body: Node) -> bool:
+	return body.has_method("untouchable") and bool(body.call("untouchable"))

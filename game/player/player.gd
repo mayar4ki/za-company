@@ -543,7 +543,7 @@ func net_state() -> Array:
 	return [global_position, _sprite.animation, _sprite.frame, _sprite.flip_h,
 		_sprite.modulate.to_rgba32(), _sprite.visible,
 		clampf(_charge / CHARGE_SECONDS, 0.0, 1.0) if _charging else 0.0,
-		_dodge_dir if _dodging() else Vector2.ZERO, _untouchable(),
+		_dodge_dir if _dodging() else Vector2.ZERO, untouchable(),
 		int(_reviving.get("peer")) if _reviving != null else 0]
 
 
@@ -1155,7 +1155,14 @@ func _dodging() -> bool:
 
 ## Whether a blow would miss this body now. A remote body's is its owner's
 ## word, from its newest step.
-func _untouchable() -> bool:
+##
+## Public, because a blow is more than its damage, and whatever deals one asks
+## this rather than guessing from health: the push that comes WITH a blow (a
+## slam, a sweep, a heave) misses with it, and an attack that hits each body
+## once (a lane, a pillar, a copy) does not count a body it missed as hit - so
+## a roll carries you THROUGH a lingering attack rather than making you immune
+## to it once its stretch is over. A push with no blow (a scrubber) never asks.
+func untouchable() -> bool:
 	if remote:
 		return _net_untouchable
 	return _dodge_t >= DODGE_SAFE_FROM and _dodge_t <= DODGE_SAFE_UNTIL
@@ -1246,7 +1253,7 @@ func _world_reaches() -> bool:
 ## A body in the untouchable stretch of a roll takes nothing and opens no window:
 ## the blow simply missed. A remote body's roll is its owner's word for it.
 func take_damage(amount: int) -> void:
-	if not _world_reaches() or _grace > 0.0 or health <= 0 or _untouchable():
+	if not _world_reaches() or _grace > 0.0 or health <= 0 or untouchable():
 		return
 	_grace = _grace_window
 	_lose_health(amount)

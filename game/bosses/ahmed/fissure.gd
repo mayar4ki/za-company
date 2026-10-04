@@ -55,7 +55,7 @@ func _tick(_delta: float) -> void:
 			continue
 		var at := PILLAR_FROM + k * PILLAR_GAP
 		for body in _targets():
-			if _hit.has(body):
+			if _hit.has(body) or _untouchable(body):
 				continue
 			var rel: Vector2 = body.global_position - anchor
 			if absf(rel.y) <= HIT_ACROSS and absf(rel.x * dir - at) <= HIT_ALONG:
