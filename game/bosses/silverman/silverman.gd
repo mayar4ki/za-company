@@ -21,8 +21,8 @@ extends "res://game/bosses/boss_base.gd"
 ## - **The Meeting** (192 -> 96): the split arrives. One interrupt, then a long
 ##   lockout - you get one.
 ## - **The Performance Review** (96 -> 0): the room goes cold, standing near
-##   him costs health on its own, and the prism arrives. Fully
-##   uninterruptible.
+##   him costs health on its own, and the prism and the glass ceiling arrive.
+##   Fully uninterruptible.
 ##
 ## A phase is announced by `herald`, which is his version of adjusting his
 ## cuffs: he has no cuffs, so what he does instead is spend a rung of his own
@@ -30,7 +30,7 @@ extends "res://game/bosses/boss_base.gd"
 ## also clears both cooldowns, so an escalation ARRIVES rather than being
 ## something you notice a few seconds later.
 ##
-## ## The five things he does
+## ## The six things he does
 ##
 ## - **the crossing** (`DASH`) - locomotion that now hurts. He passes THROUGH
 ##   you, once per crossing, and it is the only thing he has that is not on the
@@ -45,6 +45,9 @@ extends "res://game/bosses/boss_base.gd"
 ##   sweeps it across the room as a white beam, 140 degrees of it. A fan on the
 ##   floor shows the whole arc for the full second before it fires, and the
 ##   side it does not cover is the answer. See prism.gd.
+## - **the glass ceiling** - he looks up, and the panes overhead come down
+##   round you in a checkerboard, half and then the other half. The squares
+##   the first wave empties are where to stand for the second. See ceiling.gd.
 ## - **the cold room** - an aura, not an attack. No telegraph, nothing to
 ##   interrupt, and it sits OUTSIDE the grace window because a drain is not a
 ##   blow.
@@ -56,6 +59,7 @@ extends "res://game/bosses/boss_base.gd"
 
 const Poses := preload("res://game/bosses/silverman/poses.gd")
 const Copy := preload("res://game/bosses/silverman/copy.gd")
+const Ceiling := preload("res://game/bosses/silverman/ceiling.gd")
 
 ## MEDIUM numbers. The base scales an attack's damage when it is chosen; the
 ## crossing and the cold room are not on the cycle, so they scale their own
@@ -65,7 +69,11 @@ const Copy := preload("res://game/bosses/silverman/copy.gd")
 ## the building the easiest of the three (was glare 16, split 12, prism 16,
 ## crossing 18). Every big blow he has is now a heavy's worth - 24 - and the
 ## copy, the one that homes, stays the smaller number.
-const DAMAGE := {"glare": 24, "split": 18, "prism": 24}
+##
+## The glass ceiling is the preview's 14, shipped as picked. The preview was
+## drawn up against his old numbers the same afternoon they were raised, so it
+## is the one blow still on the old scale; raised by the same half it would be 21.
+const DAMAGE := {"glare": 24, "split": 18, "prism": 24, "ceiling": 14}
 const DASH_DAMAGE := 24
 
 ## How much of a wind-up can still be interrupted, by phase, and how long an
@@ -188,6 +196,21 @@ const PRISM_SAMPLES := 48
 
 @export var prism_cooldown := 4.0
 
+## THE GLASS CEILING, picked off the second attack preview and shipped as
+## previewed: the grid's size, its timing and its drawing are ceiling.gd's,
+## and this is where it may fall. Inside the walls, which stop a body 16 px in
+## and 6 px of body further, and below the window's sill at 82 - in his office
+## the glass IS the north wall, and a square drawn over the city is a square
+## nobody could stand in. Near a wall the grid moves off-centre; it is never
+## cut down.
+const CEILING_MARGIN := 22.0
+const CEILING_TOP := 84.0
+## The room shakes as each wave lands, the second a little harder.
+const CEILING_SHAKE := [3.0, 3.5]
+## Not in the preview, which never cast it twice: the prism's, the other
+## last-phase thing that takes the whole room for two seconds.
+@export var ceiling_cooldown := 4.0
+
 ## The cold room, third phase only. A drain, so it knows its own rate and is
 ## metered by nothing: the grace window neither blocks it nor is opened by it.
 ## Was 3.0 a second.
@@ -232,6 +255,11 @@ var prism_from := 0.0
 var prism_span := 0.0
 ## Bumped once per cast, so prism.gd can tell a new one from the last.
 var prism_casts := 0
+## The current glass ceiling's top-left corner in the world, fixed the moment
+## he looks up, and how many he has cast. Public for the tests and for a
+## guest, who is told both.
+var ceiling_origin := Vector2.ZERO
+var ceiling_casts := 0
 
 var _dash_time := 0.0
 var _dash_from := Vector2.ZERO
@@ -252,6 +280,11 @@ var _split_timer := 0.0
 var _prism_timer := 0.0
 var _prism_dir := 1.0
 var _prism_lengths := PackedFloat32Array()
+var _ceiling_timer := 0.0
+## How many of this cast's two waves have landed.
+var _ceiling_fell := 0
+## Seconds between the two waves, off his sheet (ceiling.gd's `falls()`).
+var _ceiling_gap := 0.0
 var _chill_rate := 0.0
 var _owed := 0.0
 var _tier := 1
@@ -270,6 +303,8 @@ func _ready() -> void:
 	# like every other consumer: the mode cannot change mid-fight.
 	_dash_damage = roundi(DASH_DAMAGE * Difficulty.damage_scale())
 	_chill_rate = chill_per_second * Difficulty.damage_scale()
+	var falls := Ceiling.falls()
+	_ceiling_gap = falls[1] - falls[0]
 	_sprite.animation_finished.connect(_on_animation_finished)
 
 
@@ -305,6 +340,7 @@ func _physics_process(delta: float) -> void:
 	_glare_timer = maxf(_glare_timer - delta, 0.0)
 	_split_timer = maxf(_split_timer - delta, 0.0)
 	_prism_timer = maxf(_prism_timer - delta, 0.0)
+	_ceiling_timer = maxf(_ceiling_timer - delta, 0.0)
 	herald = maxf(herald - delta, 0.0)
 	if dashing:
 		_dash_step(delta)
@@ -319,6 +355,10 @@ func _physics_process(delta: float) -> void:
 		_glare_reach_arm(_band_down, 1.0, glare_arm_front(_phase_time))
 	if attack == "prism" and phase == Phase.RECOVER and _phase_time < PRISM_SWEEP:
 		_prism_reach(_phase_time)
+	# The second wave, as his held impact frame ends.
+	if attack == "ceiling" and phase == Phase.RECOVER and _ceiling_fell == 1 \
+			and _phase_time >= _ceiling_gap:
+		_ceiling_fall(1)
 	_chill(delta)
 	_dash_cool = maxf(_dash_cool - delta, 0.0)
 	_consider_dash()
@@ -342,15 +382,20 @@ func _begin_attack(id: String) -> void:
 	interrupt_cooldown = LOCKOUT[tier()]
 	if id == "prism":
 		_aim_prism()
+	elif id == "ceiling":
+		_aim_ceiling()
 	super(id)
 
 
-## The prism the moment his last phase allows it, then the split while it is
-## available and there is ground for the copy to cover, the glare otherwise. "" holds him where he is, which is a perfectly good
+## The prism the moment his last phase allows it, then the glass ceiling, then
+## the split while it is available and there is ground for the copy to cover,
+## the glare otherwise. "" holds him where he is, which is a perfectly good
 ## thing for this boss to be doing.
 func _pick_attack() -> String:
 	if tier() >= 3 and _prism_timer <= 0.0:
 		return "prism"
+	if tier() >= 3 and _ceiling_timer <= 0.0:
+		return "ceiling"
 	if tier() >= 2 and _split_timer <= 0.0 and _distance_to_player() >= split_min_distance:
 		return "split"
 	if _glare_timer <= 0.0:
@@ -394,6 +439,11 @@ func _strike() -> void:
 			# frame; the beam itself is _prism_reach, every frame of the sweep.
 			_prism_timer = prism_cooldown
 			shook.emit(SHAKE["prism"], PRISM_SHAKE_SECONDS)
+		"ceiling":
+			# The first wave, on his impact frame. The second is in
+			# _physics_process, as that held frame ends.
+			_ceiling_timer = ceiling_cooldown
+			_ceiling_fall(0)
 
 
 ## The glare bursts off HIM before it sets out, and anyone inside his own reach
@@ -581,6 +631,69 @@ func _wall_distance(from: Vector2, dir: Vector2, reach: float) -> float:
 	return reach
 
 
+# --- the glass ceiling -------------------------------------------------------
+
+
+## The grid for this cast, fixed the moment he looks up: five squares by three
+## centred on the player he is after, moved - never cut - to stay on the floor.
+## It goes into the room on every machine, and a guest is told where.
+func _aim_ceiling() -> void:
+	var at := global_position
+	var player := target()
+	if player != null:
+		at = player.global_position
+	var size := Ceiling.CELL * Vector2(Ceiling.COLS, Ceiling.ROWS)
+	var origin := Vector2(roundf(at.x - Ceiling.CELL.x * Ceiling.COLS * 0.5),
+		roundf(at.y - Ceiling.CELL.y * Ceiling.ROWS * 0.5))
+	var floor_rect := _ceiling_floor()
+	if floor_rect.has_area():
+		origin.x = maxf(floor_rect.position.x, minf(floor_rect.end.x - size.x, origin.x))
+		origin.y = maxf(floor_rect.position.y, minf(floor_rect.end.y - size.y, origin.y))
+	ceiling_origin = origin
+	ceiling_casts += 1
+	_ceiling_fell = 0
+	_ceiling(origin)
+	_tell("ceiling", [origin, ceiling_casts])
+
+
+## In the room rather than under him, for copy.gd's reason and for the depth
+## sort's - see ceiling.gd's header.
+func _ceiling(origin: Vector2) -> void:
+	var grid := Ceiling.new()
+	get_parent().add_child(grid)
+	grid.cast(self, origin)
+
+
+## Where a square may be: the level's bounds less the walls and, up top, less
+## his window. A boss placed with no level round him has no limits.
+func _ceiling_floor() -> Rect2:
+	var node := get_parent()
+	while node != null and not node.has_method("bounds"):
+		node = node.get_parent()
+	if node == null:
+		return Rect2()
+	var b: Rect2 = node.call("bounds")
+	return Rect2(b.position.x + CEILING_MARGIN, b.position.y + CEILING_TOP,
+		b.size.x - CEILING_MARGIN * 2.0, b.size.y - CEILING_TOP - CEILING_MARGIN)
+
+
+## One wave landing: everybody standing in one of its squares takes the blow,
+## once - a body is in one square at a time. Off the same `cells()` the picture
+## draws, and on the same moment it draws the pane landing.
+func _ceiling_fall(wave: int) -> void:
+	_ceiling_fell = wave + 1
+	for cell in Ceiling.cells(ceiling_origin):
+		if cell["wave"] != wave:
+			continue
+		var rect: Rect2 = cell["rect"]
+		for node in get_tree().get_nodes_in_group("player"):
+			var body := node as Node2D
+			if body != null and body.has_method("take_damage") \
+					and rect.has_point(body.global_position):
+				body.call("take_damage", contact_damage)
+	shook.emit(CEILING_SHAKE[wave], SHAKE_SECONDS)
+
+
 # --- the cold room -----------------------------------------------------------
 
 
@@ -735,6 +848,7 @@ func take_damage(amount: int) -> void:
 	_glare_timer = 0.0
 	_split_timer = 0.0
 	_prism_timer = 0.0
+	_ceiling_timer = 0.0
 	shook.emit(HERALD_SHAKE, SHAKE_SECONDS)
 	# And the line, on the cue named after the phase that arrived. A boss with
 	# nothing to say here has no `Lines` child and this does nothing, which is
@@ -804,6 +918,13 @@ func net_event(what: String, args: Array) -> void:
 				prism_span = float(args[1])
 				_prism_lengths = args[3]
 				prism_casts = int(args[2])
+		"ceiling":
+			# The host's grid, square for square: where you stood on HIS
+			# machine is where it falls on this one.
+			if args.size() >= 2:
+				ceiling_origin = args[0]
+				ceiling_casts = int(args[1])
+				_ceiling(ceiling_origin)
 		_:
 			super(what, args)
 

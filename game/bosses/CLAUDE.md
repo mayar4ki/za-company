@@ -412,8 +412,8 @@ over - so the host `_tell()`s it and his copy on each guest hears it in
   one call is the moment, and it carries the attack it belongs to - an effect
   that ends with its attack (the chair, the leap's mark) must not find a guest
   a snapshot behind and end on its first frame. The chair's launch and crash,
-  Big Mo's block spark, Silverman's copy and the prism's fan (measured once, on
-  the host, walls and all) are moments of their own. What an effect thrown on a
+  Big Mo's block spark, Silverman's copy, the prism's fan (measured once, on
+  the host, walls and all) and the glass ceiling's grid are moments of their own. What an effect thrown on a
   guest does to anybody is nothing - player.gd's rule - so only the host's
   burns.
 

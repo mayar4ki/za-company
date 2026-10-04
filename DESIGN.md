@@ -799,7 +799,10 @@ unlocks.
   the copy walks at you), the cold room (proximity drains, outside the grace
   window) and the crossing (his dash, which now passes through you). His
   announcement is not cuffs - he has none - but a rung of his own shine spent on
-  the room. `tests/test_silverman.gd` fights him.
+  the room. `tests/test_silverman.gd` fights him. Two more joined his last phase
+  later, each picked off an attack preview: the prism (a white beam swept
+  across the room) and the glass ceiling (2026-10-04: panes come down round you
+  in a checkerboard, half and then the other half).
   **Placed on F12, the penthouse**, at (272, 140) - centred, because his glare
   and his crossing both run along x and centred is the only spot that gives him
   the room's full width both ways. His floor's beat (144 / 96 / 48) was authored

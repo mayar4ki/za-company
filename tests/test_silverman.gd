@@ -1,7 +1,7 @@
 extends "res://tests/helpers.gd"
 ## SILVERMAN's fight: the glare both ways, the crossing that passes through
-## you, the split, the prism, the cold room, and the ladder all of them hang
-## off.
+## you, the split, the prism, the glass ceiling, the cold room, and the ladder
+## all of them hang off.
 ##
 ## His own suite rather than a fourth section of test_bosses.gd, for the reason
 ## the ladder exists: every check after the first depends on how much health he
@@ -91,6 +91,15 @@ var _prism_behind := -1
 # The crossfire's down arm, measured as a delta like the copy.
 var _before_arm := -1
 
+# The glass ceiling, staged off the frame each cast actually begins, like the
+# prism. Two casts: the first is dodged the way the preview showed (stand in a
+# second-wave square, then step into a square the first wave emptied), the
+# second is stood through, and its second wave is the one that lands.
+var _ceiling_start := -1
+var _ceiling_again := -1
+var _ceiling_origin := Vector2.ZERO
+var _ceiling_health := -1
+
 
 func _tick(frame: int) -> void:
 	if _sv != null and is_instance_valid(_sv):
@@ -106,6 +115,12 @@ func _tick(frame: int) -> void:
 				# the sweep never covers.
 				_player().global_position = _prism_spot(_prism_from + _prism_span * 0.5 + PI)
 				_prism_health = _player().get("health")
+			if now == "ceiling":
+				if _ceiling_start < 0:
+					_ceiling_start = frame
+					_ceiling_origin = _sv.get("ceiling_origin")
+				elif _ceiling_again < 0:
+					_ceiling_again = frame
 		_prev_attack = now
 
 		var crossing: bool = _sv.get("dashing")
@@ -147,6 +162,44 @@ func _tick(frame: int) -> void:
 			_check("silverman: inside its arc the beam lands its 24, once (%s -> %s)"
 				% [_prism_behind, _player().get("health")],
 				_prism_behind - int(_player().get("health")) == 24)
+
+	# The glass ceiling's first cast, by frames into it: the first wave lands at
+	# 0.95 s (57 frames) and the second at 1.65 s (99), off his sheet's row.
+	if _ceiling_start > 0 and _sv != null:
+		var into := frame - _ceiling_start
+		if into == 2:
+			_ceiling_checks_grid()
+			_ceiling_health = _player().get("health")
+		elif into == 62:
+			_check("silverman: standing in a second-wave square, the first wave misses you (%s -> %s)"
+				% [_ceiling_health, _player().get("health")],
+				_player().get("health") == _ceiling_health)
+			# The dodge the preview showed: into a square the first wave has
+			# just emptied, the one west of where you stand.
+			_player().global_position = _ceiling_origin + Vector2(60, 42)
+		elif into == 110:
+			_check("silverman: step into a square it emptied and the second misses you too (%s -> %s)"
+				% [_ceiling_health, _player().get("health")],
+				_player().get("health") == _ceiling_health)
+		elif into == 135:
+			# Again at once, and this time the player stands still.
+			_sv.set("_ceiling_timer", 0.0)
+	if _ceiling_again > 0 and _sv != null:
+		var into := frame - _ceiling_again
+		if into == 2:
+			_ceiling_health = _player().get("health")
+		elif into == 110:
+			_check("silverman: stand still and the second wave lands its 14, once (%s -> %s)"
+				% [_ceiling_health, _player().get("health")],
+				_ceiling_health - int(_player().get("health")) == 14)
+			_check("silverman: and that was his second ceiling (%d)" % _sv.get("ceiling_casts"),
+				int(_sv.get("ceiling_casts")) == 2)
+			# Out of his sight again, so nothing else lands before the concede.
+			_sv.set("sight_radius", 0.0)
+			_health_at_edge = _player().get("health")
+		elif into == 220:
+			_check("silverman: and the glass clears itself away (%d grids left)" % _grids().size(),
+				_grids().is_empty())
 
 	if _watch_drops:
 		var health: int = _player().get("health")
@@ -198,6 +251,9 @@ func _tick(frame: int) -> void:
 			_check("silverman: the prism has its own row on the sheet (%d frames)"
 				% _sprite_of(_sv).sprite_frames.get_frame_count(&"prism_side"),
 				_sprite_of(_sv).sprite_frames.get_frame_count(&"prism_side") == 6)
+			_check("silverman: and so does the glass ceiling (%d frames)"
+				% _sprite_of(_sv).sprite_frames.get_frame_count(&"ceiling_side"),
+				_sprite_of(_sv).sprite_frames.get_frame_count(&"ceiling_side") == 6)
 			# ---- THE HUG. Standing on him, due south, which is the one place
 			# every reach he owns used to miss: the band is a 20 px lane through
 			# his chest (so it misses on BOTH axes from here), the crossing only
@@ -364,6 +420,7 @@ func _tick(frame: int) -> void:
 			_sv.set("sight_radius", 130.0)
 			_sv.set("_split_timer", 99.0)
 			_sv.set("_prism_timer", 99.0)
+			_sv.set("_ceiling_timer", 99.0)
 			_player().global_position = _sv.global_position + Vector2(0.0, 50.0)
 			_before_arm = _player().get("health")
 		1060:
@@ -377,7 +434,21 @@ func _tick(frame: int) -> void:
 			# again, or the next glare - 1.6 s on - lands before he concedes.
 			_health_at_edge = _player().get("health")
 			_sv.set("sight_radius", 0.0)
-		1170:
+		1065:
+			# ---- THE GLASS CEILING. Everything else is held, so the ceiling is
+			# all he can do; 60 px due south is outside the cold room (34) and
+			# Touch (22), and the grid centres on the player, which puts them
+			# in its middle square - a second-wave one. The checks are in
+			# _tick, by frames into each cast.
+			_sv.set("sight_radius", 130.0)
+			_sv.set("_glare_timer", 99.0)
+			_sv.set("_split_timer", 99.0)
+			_sv.set("_prism_timer", 99.0)
+			_sv.set("_ceiling_timer", 0.0)
+			_sv.global_position = Vector2(332, 140)
+			_player().global_position = Vector2(332, 200)
+			_player().call("heal", 100)
+		1460:
 			_sv.call("take_damage", 500)
 			_check("silverman: at zero he concedes (%s)" % _sv.get("has_conceded"),
 				_sv.get("has_conceded") == true)
@@ -387,17 +458,19 @@ func _tick(frame: int) -> void:
 				and _sv.is_in_group("bosses"))
 			_check("silverman: losing flight is the defeat (%s)"
 				% _sprite_of(_sv).animation, _sprite_of(_sv).animation == &"concede_side")
-		1190:
+		1480:
 			_check("silverman: a conceded boss draws no aura", _drawn_nothing())
 			_check("silverman: and casts no more copies (%d)" % _copies().size(),
 				_copies().is_empty())
-		1260:
+		1550:
 			_check("silverman: he settles, then keeps cooling (%s)"
 				% _sprite_of(_sv).animation, _sprite_of(_sv).animation == &"beaten_side")
 			_check("silverman: and stops crossing the room",
 				_sv.get("dashing") == false and _sv.get("dash_moving") == false)
 			_check("silverman: the ladder was climbed in order (%s)" % str(_opened),
 				_opened[0] == "glare" and _opened.has("split"))
+			_check("silverman: and the glass ceiling is a last-phase thing only (%s)"
+				% str(_tiers_seen), _tiers_seen.get("ceiling", 0) == 3)
 			_finish()
 
 
@@ -422,6 +495,56 @@ func _copies() -> Array[Node]:
 		if child.get_script() == script:
 			found.append(child)
 	return found
+
+
+## Everything in the room wearing ceiling.gd - in no group either, like a copy.
+func _grids() -> Array[Node]:
+	var found: Array[Node] = []
+	var script := load("res://game/bosses/silverman/ceiling.gd")
+	for child in _level().get_node("Props").get_children():
+		if child.get_script() == script:
+			found.append(child)
+	return found
+
+
+## Where the glass ceiling is and how it is put together, two frames into the
+## first cast: in the room and not on him, its floor as rows in the room's
+## depth sort, its panes over everybody, its flash under the HUD - and the
+## squares themselves, all on the floor, with the player in a second-wave one.
+func _ceiling_checks_grid() -> void:
+	var grids := _grids()
+	_check("silverman: the glass ceiling falls in the room, not on him (%d grid)" % grids.size(),
+		grids.size() == 1 and grids[0].get_parent() == _sv.get_parent())
+	if grids.is_empty():
+		return
+	var grid := grids[0] as Node2D
+	_check("silverman: and it is not a body - no groups (%s)" % str(grid.get_groups()),
+		grid.get_groups().is_empty())
+	var strips: Array = grid.get("_strips")
+	var first := strips[0] as Node2D if not strips.is_empty() else null
+	_check("silverman: its floor is one row per pixel, each in the room's depth sort (%d rows from y %s)"
+		% [strips.size(), first.global_position.y if first != null else -1.0],
+		grid.y_sort_enabled and strips.size() == 84 and first != null
+			and is_equal_approx(first.global_position.y, _ceiling_origin.y))
+	_check("silverman: its panes fall over everybody (z %d)" % grid.get_node("Air").z_index,
+		grid.get_node("Air").z_index > 0)
+	_check("silverman: and its flash goes under the HUD (%d < %d)"
+		% [(grid.get_node("Flash") as CanvasLayer).layer, _hud_layer()],
+		(grid.get_node("Flash") as CanvasLayer).layer < _hud_layer())
+	var cells: Array = load("res://game/bosses/silverman/ceiling.gd").call("cells", _ceiling_origin)
+	# The room's bounds less the walls, and less his window up top: whatever
+	# room he is in (this suite's is the lobby), the squares stay on its floor.
+	var b: Rect2 = _level().call("bounds")
+	var floor_rect := Rect2(b.position + Vector2(22, 84), b.size - Vector2(44, 106))
+	var inside := cells.filter(func(c: Dictionary) -> bool:
+		return floor_rect.encloses(c["rect"]))
+	_check("silverman: fifteen squares, every one on the floor (%d of %d)"
+		% [inside.size(), cells.size()], cells.size() == 15 and inside.size() == 15)
+	var mine := cells.filter(func(c: Dictionary) -> bool:
+		return (c["rect"] as Rect2).has_point(_player().global_position))
+	_check("silverman: centred on the player, who stands in a second-wave square (%s)"
+		% str(mine.map(func(c: Dictionary) -> int: return c["wave"])),
+		mine.size() == 1 and mine[0]["wave"] == 1)
 
 
 ## The glare's two parts, in the order they draw: under the body, then the

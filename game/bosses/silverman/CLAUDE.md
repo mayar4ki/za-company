@@ -16,9 +16,10 @@ character: **his body never changes shape.**
   that stretches while it travels reads as a cartoon, and this one is the
   final boss.
 - **He does not walk, and he has no melee.** `walk_side` is the hover taken
-  faster, because gliding is all the travel he has. He owns five things and not
+  faster, because gliding is all the travel he has. He owns six things and not
   one of them is thrown with a hand: he crosses through you, blinds you,
-  divides, sweeps the room with light, and freezes the air near him. A player
+  divides, sweeps the room with light, brings the ceiling down, and freezes
+  the air near him. A player
   standing on him is answered by the glare, whose band starts inside its own
   reach.
 - **His telegraph is DRAWN, and it can only ever dim him.** His idle already
@@ -113,7 +114,7 @@ phases with it (solo numbers below):
 |---|---|---|---|
 | The Handshake | 288-192 | the crossing, the glare | standard (`commit` 0.65) |
 | The Meeting | 192-96 | the split | one, then 3 s (`commit` 0.40) |
-| The Performance Review | 96-0 | the prism, the cold room | none (`commit` 0.0) |
+| The Performance Review | 96-0 | the prism, the glass ceiling, the cold room | none (`commit` 0.0) |
 
 `COMMIT` and `LOCKOUT` are set per phase as each attack begins, because the base
 has one dial for each and that is the only place they can narrow over a fight -
@@ -142,7 +143,7 @@ you the same time to read each blow coming. The old numbers, if it overshoots:
 glare 16 / 3.2 s, split 12 / 5 s, prism 16 / 6 s, crossing 18 / 2.4 s, cold
 room 3.0/s.
 
-**The five attacks, and what each is made of:**
+**The six attacks, and what each is made of:**
 
 - **the glare** (24, 0.80/0.70, 1.6 s cooldown) - the room whites out and the light leaves him
   as a CROSS: a 20 px lane along the floor the way he faces, out to 140, and
@@ -202,6 +203,47 @@ room 3.0/s.
   `screen` (one white flash, on his layer 1 under the HUD). Its row is the
   glare's dim-and-rise with the impact frame HELD for the sweep, because the
   beam is his shine leaving him.
+- **the glass ceiling** (14, 0.95/1.20, third phase only, 4 s cooldown) - he
+  looks up, and the shadows of the panes overhead spread across the floor
+  round you: five squares by three, 40 x 28 each, centred on where you stood
+  and moved off a wall rather than cut (`_aim_ceiling`). The checkerboard
+  comes down in two waves, at 0.95 s and 1.65 s; you wait out the first and
+  step into a square it emptied before the second lands. Picked off the second
+  attack preview ("Glass Ceiling", 2026-10-04) and shipped as previewed: the
+  game's frames were diffed against the preview's own JS at ten moments and
+  draw the same pixels, within 2 levels of 255 where layers blend. Four
+  things about it are load-bearing:
+  - **One grid, one clock, both consumers.** `ceiling.gd`'s `cells()` is the
+    list the picture draws and the list `_ceiling_fall` hits with, and
+    `falls()` reads both moments off his sheet's `ceiling` row: the first
+    wave on the impact frame, the second as that held frame ends. A square
+    you see land is a square that hit, on the frame it hit.
+  - **It lives in the room, not on him** - copy.gd's reason: the grid is
+    where you stood, and it stays there.
+  - **Its floor is 84 one-pixel rows**, each a node at its own y in the
+    room's depth sort (the grid is `y_sort_enabled`, so its rows join Props'
+    sort like props), because of the rug. The rug is pinned at its top edge
+    so that people standing on it draw after it, and one floor node sorted at
+    the grid's top edge - tried in the running game - was painted over by it
+    wherever the two overlap, which in this arena is most of the grid. A row
+    on the rug draws after the rug, and every row draws before anybody whose
+    feet are on or below it, since nothing of a body is drawn below its own
+    feet. The floor is recorded once a frame in the preview's drawing order
+    and each row draws only its own runs of it. Checked with three bodies
+    standing in the grid on and off the rug: shadows under all three, and
+    over the rug and the boards alike.
+  - **14 is the preview's number, shipped as picked, and it is the one blow
+    still on the old scale.** The preview was drawn up against his old damage
+    the same afternoon the 2026-10-03 retune landed (glare 16 then); raised by
+    the same half it would be 21. Raising it is one number in `DAMAGE`.
+  `ceiling.gd` is three layers split by space like the glare and the prism:
+  the rows (shadows, then the white of a landed pane and its cracks), `Air` at
+  z 1 (the panes falling the last 0.12 s from 70 px up, grit off the ceiling,
+  shards), and `Flash` on CanvasLayer 1 under the HUD (a faint white as each
+  wave lands). It frees itself once the last shard settles, and a concede
+  before a wave lands cancels that wave and its shadows. His row is the glare's
+  rise taken to the top of his height and held there, dimmed, while he looks
+  up. He has no line for it yet - see *What he says*.
 - **the cold room** (5.0/s inside r 34, third phase only) - an aura, not an
   attack, on the wraith's `drain()` path: it knows its own rate, and the grace
   window neither blocks it nor is opened by it. `chill.gd` draws the EDGE
@@ -315,11 +357,20 @@ Twenty lines across nine cues in `silverman/taunts.gd`, cut by
   and throw it away. The crossing gets no cue at all - it never runs through
   `_begin_attack`, and a man who announces his own dash is hurrying.
 
+The glass ceiling has no line yet. `_begin_attack` already says `ceiling` as he
+looks up, so a line arrives by being written into `taunts.gd` and cut - but
+test_barks.gd holds every line of his to a real clip on disk and names the
+attack cues it accepts, so the line, its clip and `"ceiling"` in that list go
+in together. The preview's was "Det finns ett tak. / There is a ceiling.";
+cutting it costs ElevenLabs credit.
+
 ## Online
 
 On a guest he is drawn from the host and told his moments like every boss
 (game/bosses/CLAUDE.md's *Online*), his crossing and his herald riding in his
-own snapshot.
+own snapshot. The glass ceiling is a moment: the host tells the grid's corner
+(`ceiling`), so it falls where the player stood on the HOST's machine, and only
+the host's waves hurt anybody.
 
 And Silverman crosses THROUGH the guest's player on the guest too: his drawn
 body is moved there twenty times a second, and without the collision

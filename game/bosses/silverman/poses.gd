@@ -97,9 +97,10 @@ const BODY := [
 ## `prism` is LAST rather than beside the other attacks, and that is the one
 ## rule for adding a row to a sheet that already exists: build_bosses.gd paints
 ## only the rows a hand-owned PNG is too short to hold, so a new row goes on
-## the end or it lands on top of one somebody may have drawn into.
+## the end or it lands on top of one somebody may have drawn into. `ceiling`
+## came after `flash` on the same rule.
 const ORDER := ["idle", "walk", "dash", "ghost", "glare", "split", "concede",
-	"beaten", "prism", "flash"]
+	"beaten", "prism", "flash", "ceiling"]
 
 ## `dy` floats the whole body; negative is up, and it is the ONLY thing that
 ## varies between the frames of a row. `dull` is how many steps down the ramp
@@ -191,6 +192,22 @@ const ANIMS := {
 	# darken, so it lives on the sheet with the others.
 	"flash": [
 		{"dur": 0.5, "dy": -4, "white": true},
+	],
+	# THE GLASS CEILING, picked off the second attack preview. He looks up: the
+	# glare's rise and dim taken all the way to the top of his height and HELD
+	# there, two rungs down, while the shadows of the panes darken on the floor.
+	# The impact is the first wave landing, and he holds full shine for exactly
+	# the gap between the two waves, so the second one falls as he lets it go
+	# (ceiling.gd's `falls()` reads both moments off this row). Then he settles.
+	#
+	# 0.95 wind-up, 1.20 recover, and both waves land on frame boundaries.
+	"ceiling": [
+		{"dur": 0.15, "dy": -2, "dull": 1},
+		{"dur": 0.15, "dy": -3, "dull": 2},
+		{"dur": 0.65, "dy": -4, "dull": 2},
+		{"dur": 0.70, "dy": -4, "impact": true},
+		{"dur": 0.25, "dy": -3},
+		{"dur": 0.25, "dy": -2},
 	],
 	# Defeat, and for a man of metal it is the obvious one: he loses flight.
 	# He settles the two pixels onto the floor he has never touched and the

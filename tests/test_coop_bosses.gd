@@ -12,8 +12,9 @@ extends "res://tests/coop.gd"
 ##   clock (M4), and his health and his concede follow.
 ## - **Big Mo**: going up is the guest's to see too - the fire he keeps.
 ## - **Silverman**: the copy he casts walks on the guest's floor, the prism's
-##   fan is the one the host measured, and he crosses through the guest's
-##   player the way he crosses the host's.
+##   fan is the one the host measured, the glass ceiling comes down on the
+##   guest's floor in the squares the host chose, and he crosses through the
+##   guest's player the way he crosses the host's.
 ##
 ## Each boss is made to do the thing under test rather than waited on, the way
 ## test_ahmed_moves.gd stages a move: what is under test is the getting there.
@@ -24,6 +25,7 @@ const SILVERMAN := "res://game/levels/silverman_office/silverman_office.tscn"
 const FAN_WAVE := "res://game/bosses/ahmed/fan_wave.gd"
 const CHAIR_RUN := "res://game/bosses/ahmed/chair_run.gd"
 const COPY := "res://game/bosses/silverman/copy.gd"
+const CEILING := "res://game/bosses/silverman/ceiling.gd"
 
 
 func _init() -> void:
@@ -35,7 +37,8 @@ func _plan() -> Array[Callable]:
 	return [_together, _ahmed_bar, _ahmed_says, _ahmed_throws, _ahmed_sits,
 		_ahmed_shakes, _ahmed_stops, _ahmed_hurt, _ahmed_gives_in, _to_big_mo, _arrived,
 		_big_mo_bar, _big_mo_rages, _to_silverman, _arrived, _silverman_copies,
-		_silverman_prism, _silverman_crosses, _silverman_lands]
+		_silverman_prism, _silverman_ceiling, _silverman_ceiling_where,
+		_silverman_crosses, _silverman_lands]
 
 
 func _boss() -> Node:
@@ -158,6 +161,24 @@ func _silverman_prism() -> void:
 		["Props/Boss", ["prism_casts", "prism_from", "_prism_lengths"]], func(a) -> bool:
 			return a is Array and int(a[0]) == casts and absf(float(a[1]) - from) < 0.001 \
 				and (a[2] as PackedFloat32Array).size() == 48)
+
+
+func _silverman_ceiling() -> void:
+	_boss().call("_aim_ceiling")
+	_expect("silverman: the glass ceiling comes down on the guest's floor", "children",
+		["Props", CEILING], func(n: int) -> bool: return n >= 1)
+
+
+## Where the host put it, which is where the player stood on the HOST's
+## machine - the guest is told the corner, never left to work it out.
+func _silverman_ceiling_where() -> void:
+	var boss := _boss()
+	var casts := int(boss.get("ceiling_casts"))
+	var origin: Vector2 = boss.get("ceiling_origin")
+	_expect("silverman: in the squares the host chose", "get",
+		["Props/Boss", ["ceiling_casts", "ceiling_origin"]], func(a) -> bool:
+			return a is Array and int(a[0]) == casts \
+				and (a[1] as Vector2).distance_to(origin) < 0.01)
 
 
 func _silverman_crosses() -> void:
