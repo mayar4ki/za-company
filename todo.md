@@ -6,21 +6,8 @@
     [ ] Part D - test both, then switch it on (owner + teammate)
 
 [ ] Playtest notes (2026-10-03)
-    [ ] Player movement feels odd, as if it lags - investigate
-        [x] A teammate twitched a step forward and back 30 times a second,
-            and shuffled in their idle pose before a walk (game/sync/CLAUDE.md)
-        [x] Your own hits froze a teammate's legs while they kept sliding
-        [ ] Still to watch in a real game: a teammate walking in place, then
-            jumping ahead - messages arriving late. Note the corner ping
-            when it happens
-    [x] Dodge incoming attacks - the tumble roll, on K or Z on every
-        platform; its sound is still to be cut
-    [x] A dead player's camera follows the players still standing
-    [x] A teammate can revive a dead player, who gets up with 50% health
-    [x] Silverman's attacks hit harder - he is too weak now
     [ ] New attacks for the player after beating a boss
     [ ] A reward for fighting normal enemies, like extra health
-    [x] Web build: the health bar sticks up to the top right
 
 # In-game updater: Windows and macOS
 
