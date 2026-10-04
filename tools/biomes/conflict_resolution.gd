@@ -78,8 +78,8 @@ const BIOME := {
 	# Big Mo, in the middle of the painted ring. The ring runs 232x148 from
 	# (156, 78), so its centre is (272, 152); he stands a little north of that
 	# so the walk in from the south door is a walk toward him rather than into
-	# him. Naming a boss here is also what swaps the north door's script for
-	# boss_door.gd - it stays shut until he concedes.
+	# him. Both doors stay shut until he concedes, as every room's do until
+	# it is beaten.
 	"boss": {"type": "big_mo", "at": Vector2(272, 138)},
 	# Quarters of his health, in by the south door, cued by his health for the
 	# reason in reinforcements.gd's `_due`. Ahmed's floor explains why this

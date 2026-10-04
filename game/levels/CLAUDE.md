@@ -205,6 +205,7 @@ different props, different enemies, doors that lock.
 game/levels/
   level.gd            base script every level scene runs
   door_base.gd        shared: how a door tells game.gd to swap levels
+  room_clear.gd       shared: whether a room is beaten - its doors and beats ask
   hazard_base.gd      shared: presses take_damage() on the player it overlaps
   pickup_base.gd      shared: heal() on touch, consumed only if it healed
   <biome>/            THE ROOM - five files, and it never grows
@@ -282,8 +283,9 @@ tools/CLAUDE.md.
 The `_base.gd` scripts are shared because each is one side of a handshake the
 other party owns: game.gd performs the swap doors report, and the player owns
 the take_damage()/heal() API hazards and pickups press. Everything else about a
-door, torch or heart is the level's: override `can_travel()` in a level's own
-script for a lock, or restructure that level's scenes freely. A column has no
+door, torch or heart is the level's: every door is already shut until its room
+is beaten (below), so override `can_travel()` in a level's own script only for a
+lock on top of that, or restructure that level's scenes freely. A column has no
 shared behaviour at all and carries no script.
 
 ## A floor may also name its music
@@ -343,10 +345,50 @@ game.gd carries everybody through, and whoever was waiting to get up gets up on
 the far side. It asks every frame somebody is in it rather than only when
 somebody arrives, because the party can become complete without anybody
 moving: the one still out in the room goes down. Solo, one player is the whole
-party and the door goes the moment they step in, as it always did. The one
-thing the polling changes is a LOCKED door (`boss_door.gd` with `LOCKED` on): it
-now opens on a player already standing in it when the boss concedes, rather
-than waiting for them to step off and on again.
+party and the door goes the moment they step in, as it always did. The polling
+is also what lets a sealed door (below) open on a party already standing in it,
+on the frame the room is beaten, rather than waiting for them to step off and
+on again.
+
+**A room is sealed until it is beaten.** Both doors, the way up and the way
+back down, answer `can_travel()` with one question, `room_clear.gd`'s: is
+anybody hostile still standing, and is a beat still to come. Until both are no,
+the party walks into the threshold and nothing happens - the `Seal` body was
+always the thing that made a locked door solid. Locking the way back too is
+what the penthouse's biome had asked for all along ("the south door - the one
+that is meant to seal behind you"), and it costs a player nothing a room
+could have given them: rooms keep no state, so the floor below has refilled
+and its own doors are shut until it is beaten again. The lobby has nobody in
+it and is open from its first frame.
+
+The same question decides when Ivan and Dominique walk in and when the reward
+drops (*Relief*, *Reward*, below), which is why it is one file rather than a
+copy in each: the doors open on the frame Ivan sets off. On a boss floor it is
+the boss - he counts as standing until he concedes - so an arena's gate is no
+longer a door script of its own; `boss_door.gd`, and the dev switch that held
+it open, are gone. Getting "beaten" right took two things, and both are about
+a door that would otherwise be wrong for a frame or forever:
+
+- **A beat that can no longer come is spent, not owed.** `spent()` in
+  reinforcements.gd answers for the NEXT beat's cue, not just for whether every
+  beat has fired. A health cue dies with the concede - burst a boss from above
+  his threshold to nothing and that beat never fires, deliberately - and a kill
+  cue needs somebody left to kill. Counted as owed, either one is a room whose
+  doors never open: a run that has ended without saying so.
+- **A body killed this frame is dead to everybody at once.** It is queued to
+  free and still in the `enemies` group until the frame ends; room_clear.gd and
+  the beat's kill count (`_alive()`) both skip it. Before that, the frame the
+  last placed body died read as nobody standing to the door and as one kill
+  short to the beat, and the door opened on the very frame that cued the group
+  it should have waited for. In play a blow lands in the physics step and the
+  door asks in that same step, which is why tests/test_lock.gd asks it on the
+  frame of the kill.
+
+A beat's doorway hold still applies: an arrival waits while a player is within
+`SAFE_RADIUS` of its threshold, and the room is not beaten while it waits. A
+player standing in a sealed doorway that a beat is due to come through holds
+both - step away and the beat lands. Nothing on screen says a door is sealed
+yet; the count over it is only ever the party's.
 
 ## Dressing
 
@@ -689,18 +731,18 @@ cost both of them their one sentence.
 "Over" has to mean over on both kinds of floor, and each of these was a way of
 getting it wrong:
 
-- **A conceded boss is not a hostile.** `_hostiles()` counts the `enemies` group
-  and skips anybody who has given up, which is the one line that lets a boss
-  floor reach this cue at all: a boss is in that group and is never freed, so
-  counting the group alone can never reach zero on the four floors that have
-  one.
+- **A conceded boss is not a hostile.** `room_clear.gd` counts the `enemies`
+  group and skips anybody who has given up, which is the one line that lets a
+  boss floor reach this cue at all: a boss is never freed, so counting bodies
+  alone could never reach zero on the four floors that have one. It is the
+  question the room's doors ask too, so they open on the frame he sets off.
 - **He waits until he has seen a fight.** A room is clear on its first frame
   too, and an Ivan who walks in before anything has happened is a vending
   machine in a doorway. The cue is a room that has been EMPTIED.
 - **He waits for the second beat to be spent.** A floor with reinforcements is
   quiet between the last kill of the opening arrangement and the group it cues,
   and quiet is not clear. He asks the sibling node (`spent()`), the same
-  ask-don't-listen shape the boss door and the beats themselves use.
+  ask-don't-listen shape the doors and the beats themselves use.
 
 Two more things follow from him arriving late:
 
@@ -841,7 +883,7 @@ Three things follow from that and are worth knowing before touching it:
   reason no difficulty mode touches the 24/17/36 breakpoints.
 - **Nothing signals it.** Enemies die by `queue_free()` in enemy_base.gd and
   there is no death signal; the node counts the `enemies` group instead, exactly
-  as boss_door.gd asks its boss whether it has conceded. Ask-don't-listen is the
+  as a door asks whether its room is beaten. Ask-don't-listen is the
   shape the whole level layer uses, and this is not a workaround for a missing
   signal. The health cue is the same shape one step on - it ASKS `Props/Boss`
   what he has left - which is why it is ten lines in `_due()` rather than a

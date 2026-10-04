@@ -19,7 +19,8 @@ extends Node2D
 ## nothing drops until there has been a fight; and quiet between a floor's
 ## beats is not clear, so the sibling `Reinforcements` is asked whether it is
 ## spent. Why each of those is there is relief.gd's header - this is the same
-## three guards answering the same question.
+## three guards answering the same question, and two of them are
+## game/levels/room_clear.gd's, the answer the room's doors open on.
 ##
 ## ## One heart per head, once
 ##
@@ -33,6 +34,7 @@ extends Node2D
 ## pair dropped on a guest would be gone there by the same one.
 
 const Heads := preload("res://game/heads.gd")
+const RoomClear := preload("res://game/levels/room_clear.gd")
 const HEART := preload("res://game/heart.tscn")
 
 ## How far from the spot each heart lies when there is more than one, in world
@@ -51,34 +53,17 @@ var _last := Vector2.ZERO
 func _process(_delta: float) -> void:
 	if not multiplayer.is_server():
 		return
-	var standing := _standing()
+	# Anybody still a threat - room_clear.gd's, asked for a body rather than a
+	# yes or no, because where they stand is the spot.
+	var standing := RoomClear.standing(get_tree())
 	if standing != null:
 		_fought = true
 		_last = standing.global_position
 		return
-	if not _fought or not _beats_spent():
+	if not _fought or not RoomClear.beats_spent(get_parent()):
 		return
 	_drop(Heads.count(get_tree()))
 	set_process(false)
-
-
-## Anybody in the room who is still a threat, or null. A conceded boss is not
-## one - relief.gd's `_hostiles()`, asked for a body rather than a count.
-func _standing() -> Node2D:
-	for node in get_tree().get_nodes_in_group("enemies"):
-		if node.get("has_conceded") == true or node.is_queued_for_deletion():
-			continue
-		return node as Node2D
-	return null
-
-
-## Whether this floor's second beat is done with. Asked of the sibling rather
-## than known, and a floor without one has nothing to wait for.
-func _beats_spent() -> bool:
-	var beats := get_parent().get_node_or_null("Reinforcements")
-	if beats == null or not beats.has_method("spent"):
-		return true
-	return bool(beats.call("spent"))
 
 
 ## Lays `count` hearts round where the last body fell, into the level's Y-sorted

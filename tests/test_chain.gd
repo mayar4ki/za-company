@@ -34,10 +34,6 @@ extends "res://tests/helpers.gd"
 ## taken over only means something if the lobby's track was really playing as
 ## the player left. So the lobby leg waits out the menu's handoff, and says so.
 
-## Preloaded by PATH, like everything else here reaches a level - the boss
-## floor's leg asks it whether the lock is currently on.
-const BossDoor := preload("res://game/levels/boss_door.gd")
-
 ## Nine floors of twelve play this one, and the same copy of it: the bed is
 ## handed from room to room rather than restarted at each door.
 const BED := "res://assets/music/level_loop.wav"
@@ -114,6 +110,10 @@ func _lobby(frame: int) -> void:
 				% [_camera().zoom, _camera().global_position],
 				_camera().zoom == Vector2(1, 1)
 					and _camera().global_position == _level().bounds().get_center())
+			# Nobody in the lobby to beat, so its door is open from the first
+			# frame - the one room in the building that is not a lock.
+			_check("lock: the lobby has nobody in it to beat, so it is open from the start",
+				get_nodes_in_group("enemies").is_empty() and _doors_say(true))
 		88:
 			# The menu's track has had to leave before this one could start, and
 			# 88 frames after arriving is comfortably past Music.FADE_SECONDS.
@@ -126,8 +126,7 @@ func _lobby(frame: int) -> void:
 			# Walk north into the doorway. Approaching on foot rather than
 			# teleporting onto the threshold is the point: this is the path a
 			# player actually takes through the door.
-			_player().global_position = Vector2(272, 78)
-			_key(KEY_W, true)
+			_leave(Vector2(272, 78))
 
 
 ## Floor 2.
@@ -221,8 +220,7 @@ func _content_studio(frame: int) -> void:
 					break
 			_check("enemies: and the four western fields share a spot (%d west)"
 				% west.size(), west.size() == 4 and together)
-			_player().global_position = Vector2(272, 78)
-			_key(KEY_W, true)
+			_leave(Vector2(272, 78))
 
 
 ## Floor 3, the dogleg.
@@ -302,8 +300,7 @@ func _call_center(frame: int) -> void:
 			# THE DOGLEG: the way up is at the top of an arm in the north-east
 			# corner, not over the door the player came in by. Every other floor in
 			# the chain is left by walking straight up the middle.
-			_player().global_position = Vector2(480, 78)
-			_key(KEY_W, true)
+			_leave(Vector2(480, 78))
 
 
 ## Floor 4, the first boss.
@@ -322,21 +319,17 @@ func _ahmed_office(frame: int) -> void:
 				_level().get_node_or_null("Props/Torch") == null)
 			_check("level: no heart on the boss floor",
 				_level().get_node_or_null("Props/Health") == null)
-			# Ahmed is the only thing in here, and he is in the way: a boss
-			# floor's north door is shut until he concedes - unless the lock is
-			# switched off for development, which it currently is. The checks
-			# read BossDoor.LOCKED rather than assuming, so flipping that switch
-			# back needs no edit here. The fight itself is test_bosses.gd's;
-			# this walk concedes him the short way so the chain can go on.
+			# Ahmed is the only thing in here, and he is in the way: a room's
+			# doors are shut until it is beaten, and on a boss floor that is
+			# him conceding. The fight itself is test_bosses.gd's; this walk
+			# concedes him the short way so the chain can go on.
 			var boss := _level().get_node_or_null("Props/Boss")
 			_check("boss: Ahmed stands in his office", boss != null)
 			_check("level: no adds at rest on the boss floor - Ahmed alone (%d)"
 				% get_nodes_in_group("enemies").size(),
 				get_nodes_in_group("enemies").size() == 1)
-			var way_up := _level().get_node("Props/Exit")
-			_check("door: the way up while Ahmed stands is %s"
-				% ("shut" if BossDoor.LOCKED else "open - the lock is off for dev"),
-				way_up.call("can_travel") != BossDoor.LOCKED)
+			_check("door: both ways out are shut while Ahmed stands",
+				_doors_say(false))
 			# The bar is game.gd's doing, not the boss's: it finds him by group
 			# on arrival and feeds the HUD the way it feeds the player's own.
 			_check("hud: the boss bar is up and names him (got '%s')"
@@ -375,9 +368,12 @@ func _ahmed_office(frame: int) -> void:
 				boss != null and boss.get("has_conceded") == true)
 			_check("hud: the bar goes with him when he kneels",
 				not _boss_bar().visible)
-			_check("door: the way up opens once he has", way_up.call("can_travel"))
-			_player().global_position = Vector2(272, 78)
-			_key(KEY_W, true)
+			# The quarter above put him ON his first beat's threshold and the
+			# blow after it took him to nothing before the beat could answer:
+			# a beat he never called is not one the doors may wait for.
+			_check("door: both ways open once he has, uncalled beats and all",
+				_doors_say(true))
+			_leave(Vector2(272, 78))
 
 
 ## Floor 5, and the one leg with two stops in it: the room, then its hazard.
@@ -467,8 +463,7 @@ func _the_hub(frame: int) -> void:
 				_player().get("health") < _health_mark)
 			# On along the chain, from the same distance every other leg is
 			# walked from.
-			_player().global_position = Vector2(272, 78)
-			_key(KEY_W, true)
+			_leave(Vector2(272, 78))
 
 
 ## Floor 6.
@@ -515,8 +510,7 @@ func _marble_hall(frame: int) -> void:
 					"office_boy", "office_boy", "security"])
 			# The nave's doors are at col 12, not the building's usual col 16 -
 			# so the walk up and out of this one is x 208 rather than x 272.
-			_player().global_position = Vector2(208, 78)
-			_key(KEY_W, true)
+			_leave(Vector2(208, 78))
 
 
 ## Floor 7, the S.
@@ -574,8 +568,7 @@ func _innovation_lab(frame: int) -> void:
 				% [halls], halls.min() >= 2 and halls[0] + halls[1] + halls[2] == 9)
 			# The way out of this one is the TOP hall's east end - col 24, not
 			# the building's usual col 16 - so the climb out is x 400.
-			_player().global_position = Vector2(400, 78)
-			_key(KEY_W, true)
+			_leave(Vector2(400, 78))
 
 
 ## Floor 8, the second boss.
@@ -642,8 +635,7 @@ func _conflict_resolution(frame: int) -> void:
 				% (0 if gym_theme == null else gym_theme.loop_end),
 				gym_theme != null and gym_theme.loop_mode == AudioStreamWAV.LOOP_FORWARD
 					and gym_theme.loop_end > 0)
-			_player().global_position = Vector2(272, 78)
-			_key(KEY_W, true)
+			_leave(Vector2(272, 78))
 
 
 ## Floor 9.
@@ -685,8 +677,7 @@ func _asset_recovery(frame: int) -> void:
 				return _level().get_node_or_null("Props/" + n) == null)
 			_check("level: asset recovery is dressed as a repair floor (missing %s)"
 				% [absent], absent.is_empty())
-			_player().global_position = Vector2(272, 78)
-			_key(KEY_W, true)
+			_leave(Vector2(272, 78))
 
 
 ## Floor 10.
@@ -728,8 +719,7 @@ func _hellfire(frame: int) -> void:
 			for leg in lane:
 				if leg.position.y < top.position.y:
 					top = leg
-			_player().global_position = Vector2(top.get_center().x, 78)
-			_key(KEY_W, true)
+			_leave(Vector2(top.get_center().x, 78))
 
 
 ## Floor 11, the exam.
@@ -825,8 +815,7 @@ func _executive_floor(frame: int) -> void:
 				% _level().call("spawn_position", &"chokepoint"),
 				_level().call("spawn_position", &"chokepoint")
 					== Vector2(272, 168))
-			_player().global_position = Vector2(272, 78)
-			_key(KEY_W, true)
+			_leave(Vector2(272, 78))
 
 
 ## Floor 12, the last fight - and the end of the chain, so the leg turns round.
@@ -885,13 +874,16 @@ func _silverman_office(frame: int) -> void:
 				% _boss_name(), _boss_bar().visible and _boss_name() == "SILVERMAN")
 			_check("hud: it opens full - 240 px of channel for 288 HP (%s)"
 				% _boss_fill().size.x, is_equal_approx(_boss_fill().size.x, 240.0))
-			# NO WAY UP, AND NO DOOR TO LOCK. Every other boss floor shuts its
-			# north door until the boss concedes; the penthouse is the end of the
-			# chain, so build_levels.gd cuts nothing through that wall and the
-			# boss-door swap has nothing to swap. Beating him opens no floor -
-			# what comes after him is the ending, not a room.
+			# NO WAY UP. The penthouse is the end of the chain, so
+			# build_levels.gd cuts nothing through that wall. Beating him opens
+			# no floor - what comes after him is the ending, not a room.
 			_check("door: the penthouse has no way up to shut",
 				_level().get_node_or_null("Props/Exit") == null)
+			# But it does have a way back, and that one seals behind you like
+			# every room's: the stair you came up by is shut until he concedes.
+			_check("door: the way back down is shut while he stands",
+				_level().get_node_or_null("Props/Return") != null
+					and _doors_say(false))
 			# Conceded the short way, exactly as Ahmed's floor does it: the fight
 			# is tests/test_silverman.gd's, and a live boss glaring across the
 			# room while the player walks back out makes the rest of this
@@ -906,6 +898,14 @@ func _silverman_office(frame: int) -> void:
 			_check("boss: and the room is clear with him still standing in it (%d)"
 				% get_nodes_in_group("enemies").size(),
 				get_nodes_in_group("enemies").is_empty() and last.is_inside_tree())
+			# One blow from 288 to nothing, straight past all three of his
+			# thresholds: none of those beats will ever come, and the stair
+			# must not wait for them.
+			_check("door: conceding opens the way back down, uncalled beats and all",
+				_doors_say(true))
+			# Ivan's cue has just come, and he would walk in at the very door
+			# the player is about to leave by.
+			_clear_room()
 			# The end of the chain, so there is nothing north of here to walk
 			# to: turn round instead and prove the way back down still works.
 			_key(KEY_S, true)
@@ -924,6 +924,33 @@ func _back_down(frame: int) -> void:
 				% _player().global_position,
 				_player().global_position.distance_to(Vector2(272, 80)) < 60.0)
 			_finish()
+
+
+## Out by the north door from `at`, the way every leg leaves - after beating the
+## room the short way (helpers.gd's `_clear_room`), because a room's doors are
+## shut until it is beaten. Both sides of that are checked on every floor
+## rather than one, since a floor whose doors forgot to lock is a floor the
+## player can walk straight past, and the walk is the one suite that visits
+## them all.
+func _leave(at: Vector2) -> void:
+	var room := String(_level().name)
+	if not get_nodes_in_group("enemies").is_empty():
+		_check("lock: %s is sealed both ways while anybody in it stands" % room,
+			_doors_say(false))
+	_clear_room()
+	_check("lock: %s lets the party out once it is beaten" % room,
+		_doors_say(true))
+	_player().global_position = at
+	_key(KEY_W, true)
+
+
+## Whether every door in this room - the way up, and the way back down where
+## there is one - answers `can_travel()` with `open`.
+func _doors_say(open: bool) -> bool:
+	for door in get_nodes_in_group("door"):
+		if bool(door.call("can_travel")) != open:
+			return false
+	return true
 
 
 ## Every enemy standing in the current room, by type, sorted. Six floors assert

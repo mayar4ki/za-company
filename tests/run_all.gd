@@ -23,7 +23,7 @@ extends SceneTree
 ## A suite that crashes BEFORE printing a result still fails, because `passed`
 ## never goes true - which is the case that actually matters.
 
-const SUITES := ["test_menu", "test_flow", "test_chain", "test_combat", "test_arc", "test_dodge", "test_hit_feel", "test_slam",
+const SUITES := ["test_menu", "test_flow", "test_chain", "test_lock", "test_combat", "test_arc", "test_dodge", "test_hit_feel", "test_slam",
 	"test_bosses", "test_ahmed_moves", "test_big_mo_moves",
 	"test_rage", "test_silverman", "test_barks", "test_reinforcements",
 	"test_dialogue", "test_ivan", "test_dominique", "test_reward", "test_enemy_sfx",

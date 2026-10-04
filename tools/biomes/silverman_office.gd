@@ -150,10 +150,10 @@ const BIOME := {
 			"per_head": ["social_media"]},
 	],
 	# The penthouse, and the last time anybody is kind to you. He comes up by the
-	# south door - the one that is meant to seal behind you, which is a
-	# `can_travel()` override this level does not have yet, and the day it does
-	# he is on the inside of it with you. East of the desk and off the rug, in
-	# the open floor the fight is fought across.
+	# south door - the one that seals behind you, as every room's does until it
+	# is beaten - and he arrives once it is, already on the inside of it with
+	# you. East of the desk and off the rug, in the open floor the fight is
+	# fought across.
 	"relief": {"npc": "ivan", "from": "start", "at": Vector2(400, 176),
 		"say": "res://game/npcs/ivan/after_silverman_office.gd"},
 }

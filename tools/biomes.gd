@@ -54,9 +54,9 @@ extends RefCounted
 ## stands: the straight walk between the two doors stays safe in every biome.
 ##
 ## `boss` is the same shape for one boss - {type, at}, the type a folder under
-## game/bosses/ - and having one also shuts the floor's north door until the
-## boss concedes (game/levels/boss_door.gd). A boss is an arena's whole
-## population: the enemies list on such a floor stays empty.
+## game/bosses/ - and like every room his is sealed until it is beaten, which
+## on his floor means until he concedes (game/levels/room_clear.gd). A boss is
+## an arena's whole population: the enemies list on such a floor stays empty.
 ##
 ## `reinforcements` is the ONE thing here that is not a placement, and the
 ## difference is the point: `[{after_kills, from, enemies}]`, where `enemies` is

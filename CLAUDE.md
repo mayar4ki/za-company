@@ -159,6 +159,19 @@ on the next visit - rooms keep no state yet. Doors are found through the `door`
 group and levels are typed via `preload`, never `class_name`: global class
 names live in an editor-written cache a fresh headless checkout does not have.
 
+**A room is sealed until it is BEATEN** - both doors, the way up and the way
+back down: nobody hostile standing (a conceded boss is not) and no beat still to
+come. That one question is `game/levels/room_clear.gd`, asked by every door's
+`can_travel()` and by the beats that wait for a cleared room (Ivan, Dominique,
+the reward), so the doors open on the frame Ivan sets off. Two things it costs
+to keep true: a beat whose cue can no longer come (a boss burst past his
+threshold, a kill count the room cannot reach) is spent, not owed, or the room
+would never open; and a body killed this frame is already dead to both the door
+and the beat's kill count, or the door would open on the frame that cues the
+beat it should wait for. The lobby has nobody in it and is open from its first
+frame. A suite that must walk out of a room it is not fighting beats it the
+short way, `helpers.gd`'s `_clear_room()`; `tests/test_lock.gd` owns the rule.
+
 **Three floors have a hazard that MOVES, and the rules they share are the ones
 to carry to a fourth** (game/levels/CLAUDE.md's *The clock*, *The wiring* and
 *The machines*):
@@ -337,9 +350,9 @@ one deliberate exception.
 
 **Bosses** (`game/bosses/`) run the same cycle with several attacks and concede
 instead of dying - never freed, so a boss never counts as a kill. A floor names
-its boss under `boss` in its biome, which shuts that floor's north door until he
-concedes (`game/levels/boss_door.gd`; the last floor has no north door to
-shut). game.gd finds him by the `bosses` group and gives him a HUD bar, a
+its boss under `boss` in its biome, and his room is sealed like every room until
+it is beaten - which on his floor means until he concedes, since that is when he
+stops counting as standing. game.gd finds him by the `bosses` group and gives him a HUD bar, a
 camera shake if he emits `shook`, and his theme if his scene root names a
 `music` - so a new boss needs no HUD, camera or music work.
 

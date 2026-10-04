@@ -300,8 +300,10 @@ which is the first thing the building teaches you about itself.
 
 ## Floors — 10 levels
 
-Elevator is out of order. South door = down, north door = up. Boss floors lock
-the north door until the boss falls (`can_travel()` override). Existing
+Elevator is out of order. South door = down, north door = up. Every room is
+sealed until it is beaten - both doors, until nobody hostile is standing and no
+beat is still to come (game/levels/room_clear.gd) - so a boss floor is a gate
+until the boss falls, and the lobby, with nobody in it, is open. Existing
 placement rules apply everywhere: no enemy's sight reaches the door line, the
 spawns, or whichever of the hazard and heart stands that floor has; the
 straight door-to-door walk stays safe.
@@ -591,8 +593,8 @@ names the room, and the fiction carries which floor it is.
   to read at a time, and a boss room that also burns you is a boss room where
   the death was the floor's fault.
   **Still to add**: Big Mo stands in the middle of the ring at
-  (272, 138), and naming him in the biome is also what swapped the north
-  door for boss_door.gd. His adds are a beat rather than placements - one
+  (272, 138), and his room stays sealed until he concedes, like every room
+  until it is beaten. His adds are a beat rather than placements - one
   office boy at 96 HP and again at 48 - which is also what keeps the ring
   clear: an arrival carries no `at`, so it cannot be parked inside it.
 - [x] **F8 Asset Recovery** (crowd): the office boys' OWN floor - the back of
@@ -707,8 +709,9 @@ names the room, and the fiction carries which floor it is.
   rug comes out platinum on slate.
   Ivan arrives at (400, 176) once the room is clear - though on this floor
   "clear" waits on a boss who does not exist yet.
-  **Still to add**: Silverman, and the south door sealing behind you, which is a
-  `can_travel()` override on this level's own script.
+  **Still to add**: Silverman. The south door sealing behind you needed no
+  script of this level's own in the end: every room is sealed until it is
+  beaten, so the stair back down is shut while he stands.
 
 ## Bosses — overrides on enemy_base.gd's cycle, built in this order
 
@@ -1271,12 +1274,14 @@ one that FEELS best rather than the one that is safest.
         **Built since**: a conversation per floor rather than one for all six,
         voiced - see his entry under NPCs for why one set of lines could not
         survive being heard six times.
-- [x] 5. Boss plumbing: locked north door (done: game/levels/boss_door.gd),
+- [x] 5. Boss plumbing: locked doors (done: every room is sealed until it is
+        beaten, game/levels/room_clear.gd - it began as boss_door.gd),
         defeat -> concede -> unlock (done: boss_base.gd), boss HP bar on HUD
         (done: ui/hud/boss_bar.gd, found by group so every boss gets one).
 - [ ] 6. Bosses in order Ahmed -> Big Mo -> Silverman (each adds one idea:
         summons; multi-hit rhythm; phases). Ahmed is built, less his summon.
 - [ ] 7. Ending: sticky-note screen, discount code constant, credits.
 - [x] 8. Tests: new `tests/test_bosses.gd` suite (one suite = one world);
-        test_chain checks the locked door and concedes Ahmed to walk on.
+        test_chain checks every room's doors shut and then open, conceding
+        Ahmed to walk on; tests/test_lock.gd fights the lock for real.
 - [ ] 9. Online co-op: M0-M6 under Multiplayer above.

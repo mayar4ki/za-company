@@ -6,7 +6,7 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
 ## The suites
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Forty-six suites,
+  They drive the real game with synthesized input and exit 0/1. Forty-seven suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu (HOST ONLINE and JOIN ONLINE, no MODE),
@@ -23,12 +23,23 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     through every door and one door back down, asserting each room's own
     composition and dressing as it passes, plus the music handed from floor to
     floor, and each boss floor's bar and theme, with Ahmed and Silverman
-    conceded the short way. It is built from
+    conceded the short way. Every room is sealed until it is beaten, so each
+    leg leaves through `_leave()`: both doors checked shut while anybody stands,
+    the room beaten the short way (helpers.gd's `_clear_room()`), both checked
+    open, then the walk. It is built from
     LEGS - one function per floor, handed frames counted from its own arrival,
     and a table of how long each lasts - so **inserting a floor is one leg
     function and one `LEGS` row**, and no other leg is renumbered. It sets 100%
     zoom itself before the run, because every door's "camera reframed" check
     wants the whole room framed.
+  - `test_lock.gd` - a room sealed until it is beaten, fought for real rather
+    than the chain's short way: two boys and a beat built in the lobby with the
+    party waiting in its doorway, shut through each kill - including ON the
+    frame of the kill that cues the beat, the one frame a door could get wrong
+    - and through the arrival, then going the frame the last body drops with
+    nobody stepping off. Then the content studio: both ways shut while its
+    cast stands, standing in the way back down goes nowhere, and a beat cued
+    past the room's whole population does not hold it shut forever.
   - `test_combat.gd` - guard telegraph and interrupts, wraith, warden, heavy,
     and the leash: that losing sight of the player does not stop a chase, that
     it ends 2.5s later, that the body walks back to the spot it was placed on,

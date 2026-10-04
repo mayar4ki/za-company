@@ -96,21 +96,18 @@ flame behind.
 
 A floor gets its boss from `tools/biomes/<level>.gd` under `boss`
 (`{type, at}`), the same shape as one `enemies` entry. build_levels.gd
-instances it as `Props/Boss` and swaps the north door's script for
-`game/levels/boss_door.gd`, which asks that sibling `has_conceded` on every
-attempt to walk through. No signal wiring; a room built without a boss simply
-opens. The door's `Seal` body is what makes "shut" solid.
+instances it as `Props/Boss`, the name a health-cued beat asks.
 
-**The lock is currently OFF for development**: `boss_door.gd`'s `LOCKED` const
-is false, so a boss floor can be walked straight through while the floors above
-it are being built. Everything else is untouched - the door still asks the boss,
-the fight is still placed - and the boss-floor check in tests/test_chain.gd reads
-that same const, so flipping it back to true is the only edit. It has to go back
-before shipping: a boss floor that is not a gate is just a room with a big man
-standing in it.
-
-The script is swapped BEFORE any door property is set: a node's exports reset
-to the new script's defaults, so setting them first only loses them.
+**His doors are every room's doors.** A room is sealed until it is beaten
+(game/levels/room_clear.gd), and a boss counts as standing until he concedes -
+`_concede()` takes him out of the `enemies` group, and the rule skips anybody
+with `has_conceded` besides. So the arena is a gate with no door script of its
+own: both ways out are shut while he stands, the way up and the stair back
+down, and the penthouse's one door is the stair. `boss_door.gd` used to be
+that gate, and was switched off for development; it is gone. A beat he never
+called - burst past his threshold to nothing - does not hold the doors, because
+`spent()` counts a health cue that can no longer come as spent
+(game/levels/CLAUDE.md's *A room is sealed until it is beaten*).
 
 Ahmed's sight reaches the south spawn on purpose. Every other floor keeps the
 door-to-door walk out of every sight radius; a boss floor is an arena and the

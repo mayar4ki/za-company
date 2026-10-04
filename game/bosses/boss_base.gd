@@ -15,7 +15,8 @@ extends "res://game/enemies/enemy_base.gd"
 ##   swing off the picture.
 ## - **Bosses concede instead of dying.** At zero health a boss stops fighting,
 ##   leaves the `enemies` group, plays its concede animation, and says so with
-##   `conceded`, which is what a boss floor's locked door is waiting for. It is
+##   `conceded`. Leaving the group is what unseals his room: its doors ask
+##   game/levels/room_clear.gd whether anybody is still standing. It is
 ##   never `queue_free`d: it is still standing in the room when you leave.
 ##
 ## Bosses face left or right only. Every boss sheet draws one profile - four

@@ -261,6 +261,28 @@ func _level() -> Node2D:
 	return null
 
 
+## The room beaten the short way, for a suite that has to walk out of it and is
+## not testing the fight in it. A room's doors are shut until it is beaten
+## (game/levels/room_clear.gd): every enemy gone, every boss conceded, and no
+## beat still to come - so the beats go too, with the node that would send them.
+## So do the friendly arrivals that a beaten room cues, because a 64 px Ivan
+## walking in at the door somebody is about to walk out of is a body in the way
+## of a walk that is not about him.
+##
+## Freed at once rather than queued: a door asks for the node by name, and one
+## queued to free is still there to be asked until the frame ends.
+func _clear_room() -> void:
+	for enemy in get_nodes_in_group("enemies"):
+		if enemy.is_in_group("bosses"):
+			enemy.call("take_damage", 99999)
+		else:
+			enemy.queue_free()
+	for beat: String in ["Reinforcements", "Relief", "Briefing", "Reward"]:
+		var node := _level().get_node_or_null(beat)
+		if node != null:
+			node.free()
+
+
 ## Autoloads are reached through /root rather than by name: the script given to
 ## --script is compiled before the autoload list is available to the compiler,
 ## so `Settings` and `Display` are not identifiers here the way they are in

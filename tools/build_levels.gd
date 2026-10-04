@@ -81,11 +81,11 @@ const ENEMY_SCENE := "res://game/enemies/%s/%s.tscn"
 ## same kind of room - it just happens to be pleased to see you.
 const NPC_SCENE := "res://game/npcs/%s/%s.tscn"
 ## A boss floor names its boss the same way - a type under game/bosses/ and a
-## position - under `boss`. The instance is called "Boss", which is the name
-## the floor's north door looks for: having a boss swaps that door's script for
-## the lock, shut until he concedes.
+## position - under `boss`. The instance is called "Boss", which is the name a
+## health-cued beat looks for. His doors need nothing of their own: every door
+## is shut until its room is beaten (game/levels/door_base.gd), and a boss is
+## standing in it until he concedes.
 const BOSS_SCENE := "res://game/bosses/%s/%s.tscn"
-const BOSS_DOOR := "res://game/levels/boss_door.gd"
 ## A floor's second beat, under `reinforcements`: unlike `enemies` these carry
 ## no position - they name a spawn marker and walk in through it - so the whole
 ## list travels into the scene as one export on one node, and a floor without
@@ -697,10 +697,9 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 	var door_scene := _reload("%s/door.tscn" % dir)
 	var next: String = Biomes.next_of(level)
 	if next != "":
-		# A boss floor's way up is shut until the boss concedes.
 		_add_door(props, root, door_scene, dir, "Exit", "out",
 			plan.door_at(plan.out_col, 0), 0.0,
-			next, &"start", BOSS_DOOR if not boss.is_empty() else "")
+			next, &"start")
 	var previous: String = Biomes.previous_of(level)
 	if previous != "":
 		# Half a turn puts the same scene's art, seal and threshold in the
@@ -797,12 +796,8 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 
 func _add_door(props: Node2D, root: Node2D, scene: PackedScene, dir: String,
 		node_name: String, art: String, at: Vector2, turn: float,
-		target: String, spawn: StringName, script_path := "") -> void:
+		target: String, spawn: StringName) -> void:
 	var door := scene.instantiate()
-	# Swapped before any property is set: a new script starts from its own
-	# defaults, so setting them first would only lose them.
-	if script_path != "":
-		door.set_script(load(script_path))
 	door.name = node_name
 	door.position = at
 	door.rotation = turn

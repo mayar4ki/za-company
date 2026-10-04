@@ -13,6 +13,13 @@ class_name DoorBase
 ## own `Seal` body across that gap: the map stays closed whether or not the
 ## transition fires, and that same body is what keeps a locked door solid.
 ##
+## **A room is sealed until it is beaten** - both of its doors, the way up and
+## the way back down: nobody hostile standing, and no beat still to come
+## (room_clear.gd). Until then the party walks into the threshold and nothing
+## happens. On a boss floor that is the boss, who stops counting the moment he
+## concedes, so the arena's gate is the same rule as every other room's. The
+## lobby has nobody in it and is open from its first frame.
+##
 ## **A door waits for the party.** It goes only once every STANDING player is
 ## in the doorway, and says so meanwhile ("1/2", door_count.gd). Standing is
 ## the `player` group: a body that is down has left it (player.gd's
@@ -23,6 +30,7 @@ class_name DoorBase
 signal travelled(level_path: String, spawn: StringName)
 
 const DoorCount := preload("res://game/levels/door_count.gd")
+const RoomClear := preload("res://game/levels/room_clear.gd")
 ## Where the count stands, from the door's origin and turned with it: into the
 ## room, past the threshold, so it is in front of whoever is waiting.
 const COUNT_AT := Vector2(0, 30)
@@ -104,7 +112,14 @@ func _consider() -> void:
 		travelled.emit(target_level, target_spawn)
 
 
-## Override point for locked doors: return false and the player walks into the
-## threshold with nothing happening.
+## Whether the door will go: once the room is beaten, and not before. Asked on
+## every attempt rather than told, so the door and the last body in the room
+## never have to find each other at the right moment - and because a door asks
+## every frame somebody is standing in it, a party already waiting in the
+## doorway goes the frame the room is won, without stepping off and on again.
+##
+## The level is the door's `owner`: build_levels.gd places every door in the
+## level scene, so that is what instancing a level makes it. Still the override
+## point for a door that wants a lock of its own on top.
 func can_travel() -> bool:
-	return true
+	return RoomClear.beaten(get_tree(), owner)

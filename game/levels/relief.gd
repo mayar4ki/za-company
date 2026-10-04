@@ -37,11 +37,14 @@ extends Node2D
 ##
 ## ## "Over" has to mean over, on both kinds of floor
 ##
-## `_hostiles()` counts the `enemies` group and skips anybody who has conceded,
-## which is what makes one definition serve a boss floor and an ordinary one. A
-## boss is in that group and is never freed - he is still standing in the room
-## when you leave - so counting the group alone can never reach zero on the four
-## floors that have one. Skipping the conceded is the whole difference.
+## What over IS is game/levels/room_clear.gd's, because the room's doors wait
+## on the same answer: they open on the frame he sets off, and a friendly face
+## walking in to a room still sealed - or a door opening on a room he has not
+## yet decided is clear - would be the floor saying two things about itself.
+## It skips anybody who has conceded, which is what makes one definition serve
+## a boss floor and an ordinary one: a boss is never freed - he is still
+## standing in the room when you leave - so counting bodies alone could never
+## reach zero on the four floors that have one.
 ##
 ## Two more things have to be true before it is over, and each of them was a
 ## way of getting this wrong:
@@ -53,8 +56,8 @@ extends Node2D
 ##   that is empty.
 ## - **He waits for the beats to be spent.** A floor with reinforcements is
 ##   quiet between the last kill of the opening arrangement and the arrival of
-##   the group it cues, and quiet is not clear. He asks the sibling node
-##   (`spent()`), the same ask-don't-listen shape the boss door and the beats
+##   the group it cues, and quiet is not clear. room_clear.gd asks the sibling
+##   node (`spent()`), the same ask-don't-listen shape the doors and the beats
 ##   themselves use - and a floor with no beat simply has no node to ask.
 ##
 ## ## The walk can fail, and it is allowed to
@@ -77,6 +80,7 @@ extends Node2D
 ## his head is the invitation, and taking it is theirs.
 
 const NPC_SCENE := "res://game/npcs/%s/%s.tscn"
+const RoomClear := preload("res://game/levels/room_clear.gd")
 
 ## How long he may spend crossing the room before he gives up and stands where
 ## he is. Generous: the longest honest walk on any floor is the full height of a
@@ -112,32 +116,12 @@ func _process(delta: float) -> void:
 	if _npc != null:
 		_cross(delta)
 		return
-	if _hostiles() > 0:
+	if RoomClear.standing(get_tree()) != null:
 		_fought = true
 		return
-	if not _fought or not _beats_spent():
+	if not _fought or not RoomClear.beats_spent(get_parent()):
 		return
 	_arrive()
-
-
-## Everyone in the room who is still a threat. A conceded boss is not one, which
-## is the one line that lets a boss floor reach this cue at all.
-func _hostiles() -> int:
-	var standing := 0
-	for node in get_tree().get_nodes_in_group("enemies"):
-		if node.get("has_conceded") == true:
-			continue
-		standing += 1
-	return standing
-
-
-## Whether this floor's second beat is done with. Asked of the sibling rather
-## than known, and a floor without one has nothing to wait for.
-func _beats_spent() -> bool:
-	var beats := get_parent().get_node_or_null("Reinforcements")
-	if beats == null or not beats.has_method("spent"):
-		return true
-	return bool(beats.call("spent"))
 
 
 func _arrive() -> void:

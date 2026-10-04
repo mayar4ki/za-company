@@ -40,10 +40,10 @@ extends Node2D
 ## definitions of how big the party is would drift the day there are two of
 ## them.
 ##
-## ## No signals, for the reason boss_door.gd has none
+## ## No signals, for the reason the doors have none
 ##
 ## Nothing tells this node an enemy died. It counts the `enemies` group, exactly
-## as the boss door asks its boss whether it has conceded, so nobody has to find
+## as a door asks whether its room is beaten, so nobody has to find
 ## anybody at the right moment and a room built without a beat simply has no
 ## node. Deaths are a `queue_free()` in enemy_base.gd and there is no death
 ## signal to hang off; counting is not a workaround for that, it is the same
@@ -70,6 +70,7 @@ const SAFE_RADIUS := 64.0
 const ENEMY_SCENE := "res://game/enemies/%s/%s.tscn"
 
 const Heads := preload("res://game/heads.gd")
+const RoomClear := preload("res://game/levels/room_clear.gd")
 
 ## Authored per floor as `reinforcements` in tools/biomes/<level>.gd and written
 ## in by build_levels.gd. One dictionary per beat, in the order they fire:
@@ -178,12 +179,41 @@ func _spawn(type: String, at: Vector2) -> void:
 		enemy.call("unleash")
 
 
-## Whether every beat this floor has is spent: all of them fired and the last
-## arrival already through the door. Asked rather than announced, like
-## everything else here - game/levels/relief.gd needs to know the fight is over
-## and not merely quiet, and a room in the gap between two beats is quiet.
+## Whether every beat this floor has is spent: nobody still to walk in, and no
+## beat left whose cue can still come. Asked rather than announced, like
+## everything else here - the room's doors and game/levels/relief.gd both need
+## to know the fight is over and not merely quiet (room_clear.gd), and a room
+## in the gap between two beats is quiet.
 func spent() -> bool:
-	return _next >= waves.size() and _queue.is_empty()
+	if not _queue.is_empty():
+		return false
+	if _next >= waves.size():
+		return true
+	# Not counted yet, so nothing can be said about what is still to come.
+	if _population < 0:
+		return false
+	return not _can_come(waves[_next])
+
+
+## Whether `wave`'s cue can still arrive. Beats fire in order, so the next one
+## being out of reach puts every one after it out of reach too - and a beat that
+## can never come must not count as one still owed: the doors are shut until
+## the room is beaten, and a door waiting on a beat that will never land is a
+## run that has ended without saying so.
+##
+## Two ways for a cue to be out of reach. A health cue dies with the boss's
+## concede: he gives in AT zero and `_due()` stops asking once he has, so a blow
+## that takes him from above a threshold to nothing leaves that beat unfired for
+## good (deliberately - kill him that fast and he does not get to call
+## security). And a kill cue needs somebody left to kill: with nobody standing,
+## `_killed()` is as high as it will ever get.
+func _can_come(wave: Dictionary) -> bool:
+	if _due(wave):
+		return true
+	if wave.has("at_boss_fraction"):
+		var boss := get_parent().get_node_or_null("Props/Boss")
+		return boss != null and boss.get("has_conceded") != true
+	return RoomClear.standing(get_tree()) != null
 
 
 ## Where this beat walks in. Asked of the level by name through has_method, the
@@ -218,8 +248,8 @@ func _crowded(at: Vector2) -> bool:
 ## cued at 0 is a placement that walks in through a door, which is worse than a
 ## placement: it lands while the player is still reading the room.
 ##
-## Asked of the boss rather than heard from him, the same way boss_door.gd finds
-## out whether he has conceded, and for the same reason - nobody has to find
+## Asked of the boss rather than heard from him, the same way a door finds out
+## whether its room is beaten, and for the same reason - nobody has to find
 ## anybody at the right moment, and a floor with no boss simply never fires.
 ## The concede guard is load-bearing: he concedes AT zero, which satisfies every
 ## threshold at once, so without it the last beat of a fight lands on the frame
@@ -246,5 +276,14 @@ func _killed() -> int:
 	return _population + _released - _alive()
 
 
+## A body killed this frame is queued to free and still in the group until the
+## frame ends, and it is not alive: counted, the last kill of an arrangement
+## would read as one short for a frame, `spent()` would see nobody standing and
+## a kill cue not yet due, and the doors would open on the frame that cues the
+## beat they should be waiting for.
 func _alive() -> int:
-	return get_tree().get_nodes_in_group("enemies").size()
+	var alive := 0
+	for node in get_tree().get_nodes_in_group("enemies"):
+		if not node.is_queued_for_deletion():
+			alive += 1
+	return alive
