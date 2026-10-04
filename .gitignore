@@ -2,6 +2,10 @@
 .godot/
 /android/
 
+# The editor's copy of a loaded GDExtension: Windows locks a DLL in use, so
+# Godot loads a ~-prefixed copy of it instead. Rewritten every editor launch.
+addons/**/~*
+
 # Export output
 /build/
 /exports/
@@ -17,6 +21,3 @@ Thumbs.db
 # python bytecode from tools/voice and tools/sfx
 __pycache__/
 *.pyc
-
-# Python bytecode from the tools that talk to a web API
-__pycache__/
