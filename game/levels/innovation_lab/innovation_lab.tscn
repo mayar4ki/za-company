@@ -31,6 +31,7 @@
 [ext_resource type="Texture2D" path="res://game/levels/innovation_lab/doorway_back.tres" id="34_fv6a6"]
 [ext_resource type="Script" uid="uid://gwrx77uv6nl2" path="res://game/levels/reinforcements.gd" id="35_u8ax3"]
 [ext_resource type="Script" uid="uid://bmwu6o7vo7fnp" path="res://game/levels/relief.gd" id="36_pgx54"]
+[ext_resource type="Script" path="res://game/levels/reward.gd" id="37_rx4xc"]
 
 [node name="InnovationLab" type="Node2D" unique_id=2082290129]
 y_sort_enabled = true
@@ -318,3 +319,6 @@ npc = "dominique"
 from = &"returned"
 at = Vector2(200, 130)
 say = "res://game/npcs/dominique/before_big_mo.gd"
+
+[node name="Reward" type="Node2D" parent="." unique_id=176258192]
+script = ExtResource("37_rx4xc")

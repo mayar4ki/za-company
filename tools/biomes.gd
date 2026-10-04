@@ -89,8 +89,8 @@ extends RefCounted
 ## `relief` is the floor's THIRD beat, and the only one that is not a fight:
 ## `{npc, from, at, say}` - who walks in once the room is finally clear, through
 ## which spawn marker, to which spot, carrying which lines. It is Ivan, on the
-## six floors that have earned him, and from floor 2 up he is the only healing
-## in the game.
+## six floors that have earned him, and from floor 2 up he and `reward` below
+## are the only healing in the game.
 ##
 ## It is an arrival rather than a placement for the same reason a reinforcement
 ## is: standing him in the room from the first frame puts a solid 64px body in
@@ -107,6 +107,14 @@ extends RefCounted
 ## bodies and sharing one heart is the same unfairness twice. Both numbers come
 ## out of game/heads.gd. The cue and the rest of the reasoning are in
 ## game/levels/relief.gd.
+##
+## `reward` is the plain version of the same thing: `true`, and when the room is
+## clear on the same cue, the last body down leaves one heart per head where it
+## fell. Nobody walks in and nothing is said, so it carries no spot - the fight
+## decides where it ended, which is the one place certain to be on screen. The
+## innovation lab has it: three floors ran without a heal into Big Mo, and its S
+## hides any authored spot two halls from wherever the fight finished. See
+## game/levels/reward.gd.
 ##
 ## `npcs` places the friendly faces: `[{id, at, facing, face_left, conversation,
 ## greets}]`, where `id` is a folder under game/npcs/ and `conversation` a .gd
@@ -185,7 +193,8 @@ extends RefCounted
 ##            hub is the first and so far only floor with any.
 ##   heart    true to stand a heal pickup in the room. Omitted means NO, and
 ##            that default is the rule rather than a convenience - only the
-##            lobby hands one out, and from floor 2 up healing is Ivan's job.
+##            lobby hands one out, and from floor 2 up healing is EARNED: Ivan
+##            after a fight, or a `reward` drop at the end of one.
 ##   runner   how far the central floor band is tinted towards the accent, i.e.
 ##            whether that band is carpet or just more of the same stone.
 

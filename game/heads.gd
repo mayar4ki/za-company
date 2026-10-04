@@ -25,8 +25,9 @@ extends RefCounted
 ## how hurt he is reads a FRACTION of his max, so it moves with him.
 ##
 ## The healing side reads the same number in the other direction: Ivan hands out
-## one heart per head (game/npcs/ivan/ivan.gd), because four players sharing one
-## heart is the same unfairness as one player facing four times the bodies.
+## one heart per head (game/npcs/ivan/ivan.gd), and so does a cleared room's drop
+## (game/levels/reward.gd), because four players sharing one heart is the same
+## unfairness as one player facing four times the bodies.
 ##
 ## Preloaded by path like every other cross-feature script here - global class
 ## names live in an editor-written cache a fresh headless checkout does not have.

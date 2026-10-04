@@ -119,7 +119,8 @@ const BIOME := {
 	"hazard_at": Vector2(176, 850),
 	# No `heart_at` beside it, because this floor has never carried a heart:
 	# `heart` is unset, so there is no stand for one to default onto. The lab
-	# is the last floor before the gym and it is meant to be entered hurt.
+	# is the last floor before the gym and it is meant to be entered hurt -
+	# and left whole: see `reward` below.
 	# Three rooms, three jobs. Everything wall-mounted is on a wall the player
 	# actually faces while crossing, and nothing stands in a link: a prop is a
 	# solid body, and the two links are the only places on this floor where one
@@ -272,6 +273,12 @@ const BIOME := {
 			"enemies": ["office_boy", "social_media"],
 			"per_head": ["office_boy"]},
 	],
+	# The floor's heal: once the room is clear, the last body down leaves a
+	# heart per head where it fell. The hub and the marble hall below feed
+	# nobody, so without it this was three floors without a heal straight into
+	# Big Mo. A drop rather than Ivan because the S cannot bring him: he would
+	# walk in at the south door, two halls behind wherever the fight ended.
+	"reward": true,
 	# The FOURTH beat, and the one floor that carries it WITHOUT Ivan: the gym
 	# is next, and this floor is not one of the six he walks. So he arrives
 	# alone, through the north door like every briefing, and the room has one

@@ -446,13 +446,22 @@ path. What a clip buys is the typing rate - the line's length over the clip's -
 so a beat with no clip, or one not yet imported, is silent and types at the
 flat rate. Who sounds like what: game/npcs/CLAUDE.md's *Their voices*.
 
-**Ivan heals, and he is the only healing in the game from floor 2 up.** He is
+**Ivan heals, and from floor 2 up he and a cleared room's drop are the only
+healing in the game.** He is
 the third beat (`relief`): once the room is finally clear he walks in by the
 door the player came by, crosses to an authored spot, and at the end of his
 lines throws **one heart per head** (`game/heads.gd`), once per visit. Six
 floors have him, and each names its own conversation
 (`game/npcs/ivan/after_<floor>.gd`), because one shared set read as a vending
 machine with a voice. Every one ends on "Eat.", the word his gift lands on.
+
+**A cleared room can also just drop hearts** (`reward` in its biome,
+`game/levels/reward.gd`): on Ivan's cue - the room emptied, its beats spent -
+the last body down leaves one heart per head where it fell, with nobody
+bringing them. No spot is authored, because where the fight ended is the one
+place certain to be on screen. The innovation lab has it, the floor whose S
+would put Ivan's south door two halls from the fight. The loose heart both of
+them use is `game/heart.tscn`; `tests/test_reward.gd` owns the drop.
 
 **Dominique is the FOURTH beat** (`briefing`), and the only one that hands over
 information: on the three floors under a boss he comes down the NORTH door once

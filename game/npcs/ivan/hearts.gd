@@ -17,7 +17,7 @@ extends RefCounted
 ## it at open floor by construction, because that is where the player is
 ## standing.
 
-const SCENE := preload("res://game/npcs/ivan/heart.tscn")
+const SCENE := preload("res://game/heart.tscn")
 
 ## Peak of the arc in world pixels, and the only number here that is about the
 ## picture: high enough to read as a lob over a 14px body, low enough that a

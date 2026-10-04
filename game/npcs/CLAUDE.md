@@ -179,11 +179,13 @@ measure of whether this stayed small.
   to, which points it at open floor by construction - a fan all the way round
   him would land in the scenery, because the safe corners he stands in are the
   ones nothing else wanted.
-- **The heart is HIS** - `game/npcs/ivan/heart.tscn`, written once by
+- **The heart is the loose one** - `game/heart.tscn`, written by
   `tools/build_npcs.gd` on the same `pickup_base.gd` every level's own heart
-  uses. A room's heart is dressing and takes the room's palette; his is the same
-  red on every floor, so there is one file rather than six identical ones. From
-  floor 2 up it is the only healing in the game.
+  uses. A room's heart is dressing and takes the room's palette; a loose one is
+  the same red on every floor, so there is one file rather than a copy per
+  level. It was his alone until a cleared room started dropping it too
+  (game/levels/reward.gd), which is why it sits at game/ and not in his folder.
+  From floor 2 up those two are the only healing in the game.
 
 Where he turns up, and the cue he waits for, is a floor's business and not his:
 `relief` in biome data, `game/levels/relief.gd`. He does not know he is a beat.

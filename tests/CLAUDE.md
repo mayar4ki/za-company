@@ -6,7 +6,7 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
 ## The suites
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Forty-five suites,
+  They drive the real game with synthesized input and exit 0/1. Forty-six suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu (HOST ONLINE and JOIN ONLINE, no MODE),
@@ -150,6 +150,14 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     no heart is ever thrown. It also checks the RULE the three floors are only
     an instance of - a briefing under every boss floor and under no other - by
     reading the whole chain off disk, so a fourth boss cannot ship unannounced.
+  - `test_reward.gd` - a cleared room's hearts (game/levels/reward.gd), built
+    by hand in the empty lobby the way test_ivan.gd builds its beat: nothing in
+    a room never fought, nothing while a body stands, then a real office boy
+    killed and one heart where he fell, live, healing when walked onto, and
+    gone once taken; a second fight in the same visit drops nothing; and with a
+    second head and a stand-in second beat, nothing until the beat is spent,
+    then two hearts round the spot and not on top of each other. Ends by
+    checking the innovation lab carries one off disk and the lobby does not.
   - `test_enemy_sfx.gd` - the bestiary's noise: that all six own the cues
     their archetype can actually reach and no cue it can never reach, that
     every declared stream resolves, that the wraith's drain is a sealed loop

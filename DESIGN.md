@@ -229,8 +229,11 @@ The staggered single-file walk-in through a known door carries it for now.
   the "max one on the floor" rule became "once per visit". The arc, the
   `pickup_base.gd` heart and "Eat." as his last word all survived intact.
   Present on floors 3, 4, 7, 8, 9, 10. From floor 2 up he is the ONLY healing in
-  the game: the floors themselves carry no heart, so the lobby's is the last one
-  handed out for free.
+  the game but one: the floors themselves carry no heart, so the lobby's is the
+  last one handed out for free. The one is the innovation lab, where the last
+  body down drops a heart per head once the room is clear (`reward`,
+  game/levels/reward.gd) - the hub and the marble hall feed nobody, and the S
+  would put him two halls from the fight.
   **And he says a different thing on every one of them.** He shipped with one
   set of three lines for all six floors, which was wrong the moment anybody
   played more than one of them: the whole point of a man who walks in after a
@@ -255,7 +258,7 @@ a teal robe and Ivan's cropped black curls over a red one, both with a hemp
 waist cord and a floor-length hem. It is the one deliberately uncanny thing
 about the only two people in the building who are kind to you: a colleague you
 have to look up at. It also does a job the writing cannot — from floor 2 up
-Ivan is the only healing in the game, and at double height he is the tallest
+Ivan is nearly all the healing in the game, and at double height he is the tallest
 thing in any room he is in, which finds him in a crowd without a marker.
 
 Mechanically it costs a 64 px cell (the bosses' size, already supported) and

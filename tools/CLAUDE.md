@@ -413,8 +413,8 @@ route alone is how a line stops landing on the thing it is about.
 `relief` is the other way an NPC gets into a room, and the only one that is not
 a placement: `{npc, from, at, say}` - who walks in once the floor is CLEAR,
 through which spawn marker, to which spot, carrying which lines. It is Ivan, on
-the six floors that have earned him, and from floor 2 up he is the only healing
-in the game. Because he arrives rather than stands, the furniture rule applies
+the six floors that have earned him, and from floor 2 up he and `reward` (a
+cleared room dropping hearts, below) are the only healing in the game. Because he arrives rather than stands, the furniture rule applies
 to `at` alone - the room is empty by the time he reaches it, so that spot only
 has to clear the scenery and the door line. Why it is an arrival, what counts as
 "clear" on a boss floor, and why he does not greet: game/levels/CLAUDE.md.
@@ -428,12 +428,17 @@ bodies at once. The two keys are separate rather than a list for the reason
 the prop shelves are named by role: a room's scene should say which arrival
 is which.
 
-`build_npcs.gd` also writes ONE thing that is not an NPC -
-`game/npcs/ivan/heart.tscn`, the pickup he throws - and that is the single place
-this generator crosses into build_levels.gd's territory. The reason is the rule
-the hearts follow: a room's own heart is dressing and takes the room's palette
-with it, while his is the same red on every floor he walks onto. One file, not
-six identical ones in six level folders.
+`build_npcs.gd` also writes ONE thing that is not an NPC - `game/heart.tscn`,
+the loose heart Ivan throws and a cleared room drops (`reward`, game/levels/
+reward.gd) - and that is the single place this generator crosses into
+build_levels.gd's territory. The reason is the rule the hearts follow: a room's
+own heart is dressing on a stand and takes the room's palette with it, while a
+loose one is the same red on every floor. One file, not a copy in every level
+folder; it is written here because Ivan's was the first.
+
+`reward` itself is a biome key and nothing more: `true`, and build_levels.gd
+writes a `Reward` node that carries no position, because the hearts drop where
+the last body fell.
 
 ## What every generator writes
 
@@ -475,12 +480,13 @@ generator, and what each one owns.
                                        tools/npc_art.gd (double height, robe),
                                        then slices whatever is on disk, 64px
                                        cells
-- `game/npcs/ivan/heart.tscn`       <- tools/build_npcs.gd, and it is the one
+- `game/heart.tscn`                 <- tools/build_npcs.gd, and it is the one
                                        thing that generator writes which is not
-                                       an NPC: the heart Ivan throws, his and
-                                       not a level's, because a room's heart
-                                       takes the room's palette and his is the
-                                       same red on every floor
+                                       an NPC: the loose heart Ivan throws and a
+                                       cleared room drops, not a level's,
+                                       because a room's heart takes the room's
+                                       palette and a loose one is the same red
+                                       on every floor
 - the NPCs' looks & robes           <- game/npcs/roster.gd (data, edited by
                                        hand)
 - `game/bosses/*/*_frames.tres`     <- tools/build_bosses.gd: seeds

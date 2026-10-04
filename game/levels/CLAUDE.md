@@ -355,7 +355,8 @@ the game wants: a hazard unless the floor says `"hazard": "none"` (the lobby,
 Ahmed's office, the gym, the penthouse and the marble hall say it), and NO
 heart unless the floor says `"heart": true` - which only the lobby does. Floor
 1 is where a player finds out what a heal is; from floor 2 up the supply is
-meant to be Ivan carrying one to you, not a room leaving one lying about. A
+meant to be earned - Ivan carrying one to you, or a cleared room's `reward`
+(below) - not a room leaving one lying about from the start. A
 declined fixture gets neither the instance nor the scene: the generator
 deletes the stale `torch.tscn` or `health_item.tscn` rather than leave a level
 folder holding a fixture nothing points at. Their art comes from
@@ -754,6 +755,29 @@ lines live in `game/npcs/dominique/before_<boss>.gd`, one file per floor, and
 `tests/test_dominique.gd` checks the beat and then checks the RULE - a briefing
 under every boss floor and under no other - by reading the whole chain off disk,
 so a fourth boss added later fails there rather than shipping unannounced.
+
+## Reward - a cleared room's hearts
+
+A floor with `"reward": true` in its biome gets a `Reward` node
+(`game/levels/reward.gd`), and it is Relief with nobody in it: on the same cue -
+somebody was fought, nobody is standing, the second beat is spent - the last
+body down leaves **one heart per head** (`game/heads.gd`) where it fell, once
+per visit. The innovation lab is the floor that has it.
+
+**The spot is wherever the fight ended, and that is the design.** An authored
+spot is a spot the player may never walk back to - on the S, any of three halls
+that cannot see each other - while the last kill is the one place certain to be
+on screen, next to whoever made it, the moment the room is over. It is also why
+the lab got this rather than Ivan: he would walk in at the south door, two halls
+behind the fight, and he has no pathfinding to follow the bends. More than one
+heart lies in a ring `SCATTER` (7 px) round the spot, small enough that a body
+which fell against a wall does not put a heart through it.
+
+The cue is relief.gd's three guards answering the same question, and its header
+is where each one is argued. The heart is `game/heart.tscn`, the loose one Ivan
+throws - shared, so it sits at game/ - and online it is the host's to drop: a
+heart made mid-room reaches a guest on the next snapshot, made from its scene.
+`tests/test_reward.gd` owns it.
 
 ## The pair that makes a boss fight annoying
 

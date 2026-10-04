@@ -21,14 +21,13 @@ extends SceneTree
 ## could plausibly want. Enemies are the opposite case, which is why they have
 ## their own frozen seed.
 ##
-## It also writes IVAN'S HEART - `game/npcs/ivan/heart.tscn`, the pickup he
-## throws. It is his and not a level's, which is the one place this generator
-## crosses into territory build_levels.gd otherwise owns, and the reason is the
-## rule the hearts follow: from floor 2 up healing is not something a room hands
-## out, it is something Ivan brings. A room's own heart is dressing and takes
-## the room's palette with it; his is the same red on every floor he walks onto,
-## so there is one file rather than six identical ones sitting in six level
-## folders. The art is the same painter the lobby's heart uses (tools/props/),
+## It also writes THE LOOSE HEART - `game/heart.tscn`, the pickup Ivan throws
+## and a cleared room drops (game/levels/reward.gd). It sits at game/ because
+## those two share it, and it is written here because Ivan's was the first,
+## which is the one place this generator crosses into territory build_levels.gd
+## otherwise owns. A room's own heart is dressing on a stand and takes the
+## room's palette with it; a loose one is the same red on every floor, so there
+## is one file rather than a copy in every level folder. The art is the same painter the lobby's heart uses (tools/props/),
 ## which has no palette input - a heart is a heart.
 ##
 ## Run: godot --headless --path . --script res://tools/build_npcs.gd
@@ -43,10 +42,10 @@ const Roster := preload("res://game/npcs/roster.gd")
 ## characters share - see the note above.
 const SEED_SRC := "res://game/player/src/character_cc0.png"
 
-## The heal pickup Ivan throws, and the script it runs on - the same one every
+## The loose heal pickup - Ivan's throw, a cleared room's drop - and the script it runs on - the same one every
 ## level's own heart uses, because the player heals by walking onto a thing and
 ## it should not matter whose thing it is.
-const HEART_SCENE := "res://game/npcs/ivan/heart.tscn"
+const HEART_SCENE := "res://game/heart.tscn"
 const PICKUP_SCRIPT := "res://game/levels/pickup_base.gd"
 
 
@@ -60,7 +59,7 @@ func _initialize() -> void:
 	quit(1 if failed else 0)
 
 
-## Ivan's heart: the shared pickup_base.gd with the shared heart art, and
+## The loose heart: the shared pickup_base.gd with the shared heart art, and
 ## nothing else. Deliberately identical in shape to a level's own health item
 ## (tools/build_levels.gd's `_write_health_scene`) so the player cannot tell
 ## which hand a heart came out of - what differs is who put it there.

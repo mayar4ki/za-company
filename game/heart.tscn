@@ -1,0 +1,24 @@
+[gd_scene format=4]
+
+[ext_resource type="Script" path="res://game/levels/pickup_base.gd" id="1_jur7b"]
+
+[sub_resource type="PortableCompressedTexture2D" id="PortableCompressedTexture2D_m7aub"]
+_data = PackedByteArray("AAADAAUAAAABAAAACQAAAAgAAABiAAAAUklGRloAAABXRUJQVlA4TE0AAAAvCMABECdAmG00kr3HenSHR5BtM4wRju4gxyLIthnJSIZ3vEPNfwB6Vd+tgUJIkpz5O4Efg08Ayd/uISL6Hy0YjNVGqJavqvBewn4ACQA=")
+size_override = Vector2(9, 8)
+keep_compressed_buffer = true
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_tsx56"]
+radius = 6.0
+
+[node name="Heart" type="Area2D" unique_id=938493142]
+monitorable = false
+script = ExtResource("1_jur7b")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1629771325]
+position = Vector2(-4, -8)
+texture = SubResource("PortableCompressedTexture2D_m7aub")
+centered = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=195714595]
+position = Vector2(0, -4)
+shape = SubResource("CircleShape2D_tsx56")

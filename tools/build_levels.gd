@@ -102,6 +102,11 @@ const REINFORCEMENTS_SCRIPT := "res://game/levels/reinforcements.gd"
 ## NPC and which lines, and none of that is code. They are named by ROLE, the
 ## way the prop shelves are, so a room's scene says which arrival is which.
 const RELIEF_SCRIPT := "res://game/levels/relief.gd"
+## A cleared room's reward, under `reward`: one heart per head left where the
+## last body fell. Nobody arrives, so it is its own script rather than a third
+## role for relief.gd, and it carries nothing - the spot is wherever the fight
+## ended.
+const REWARD_SCRIPT := "res://game/levels/reward.gd"
 ## A floor's CLOCK, under `studio`: one node counting take / cue / rest, which
 ## everything on that floor that can hurt you reads. It carries no position -
 ## a rhythm is not anywhere - so like the two beats it travels into the scene as
@@ -776,6 +781,16 @@ func _write_level_scene(level: String, dir: String, props_dir: String, tileset: 
 		arrival.set("say", arriving.get("say", ""))
 		root.add_child(arrival)
 		arrival.owner = root
+
+	# The plain version of the third beat: hearts on the floor once the room is
+	# clear, with nobody bringing them. Written after the second beat for the
+	# reason the arrivals are - it waits on it.
+	if Biomes.BIOMES[level].get("reward", false):
+		var reward := Node2D.new()
+		reward.name = "Reward"
+		reward.set_script(load(REWARD_SCRIPT))
+		root.add_child(reward)
+		reward.owner = root
 
 	return _pack(root, "%s/%s.tscn" % [dir, level])
 
