@@ -20,26 +20,6 @@ extends RefCounted
 ## Preloaded by path like every other cross-feature script here - global class
 ## names live in an editor-written cache a fresh headless checkout does not have.
 
-## Whether a keyboard source has looked at the platform yet - see browser_keys().
-static var _checked := false
-
-
-func _init() -> void:
-	if not _checked:
-		_checked = true
-		if OS.has_feature("web"):
-			browser_keys()
-
-
-## Ctrl taken back out of the dodge, leaving K. In a browser Ctrl+W closes the
-## tab and no page can stop it, so a dodge on Ctrl is a dodge that now and then
-## quits the game - and, for a host, ends it for the whole party. Once per run,
-## by the first keyboard source made; public so a suite can try it on a desktop.
-static func browser_keys() -> void:
-	for ev in InputMap.action_get_events(&"dodge"):
-		if ev is InputEventKey and (ev.physical_keycode == KEY_CTRL or ev.keycode == KEY_CTRL):
-			InputMap.action_erase_event(&"dodge", ev)
-
 
 ## Where the stick points, at most 1 long.
 func move() -> Vector2:

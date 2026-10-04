@@ -3,7 +3,7 @@ extends "res://tests/helpers.gd"
 ## as previewed (player.gd's *The dodge* constants, tools/roll_pose.gd's frames,
 ## roll_dust.gd's dust). In the empty lobby, one stage after another:
 ##
-## - the key is K and Ctrl, and a browser build keeps K alone;
+## - the keys are K and Z, the same on every build, and never Ctrl;
 ## - all ten characters hold the three rows, four frames at 12.5 a second,
 ##   pixel for pixel what roll_pose.gd makes of their recoloured sheet - and the
 ##   source sheet holds no roll at all;
@@ -27,7 +27,6 @@ extends "res://tests/helpers.gd"
 const Roster := preload("res://game/player/characters/roster.gd")
 const Art := preload("res://tools/character_art.gd")
 const RollPose := preload("res://tools/roll_pose.gd")
-const InputSource := preload("res://game/player/input_source.gd")
 const SRC := "res://game/player/src/character_cc0.png"
 const DUST := "res://game/player/roll_dust.gd"
 
@@ -137,14 +136,10 @@ func _dust(parent: Node) -> int:
 
 func _keys() -> void:
 	var codes := _dodge_codes()
-	_check("keys: K dodges (%s)" % str(codes), codes.has(KEY_K))
-	_check("keys: and so does Ctrl, off the web", codes.has(KEY_CTRL))
-	InputSource.browser_keys()
-	codes = _dodge_codes()
-	_check("keys: a browser build drops Ctrl and keeps K (%s)" % str(codes),
-		codes.has(KEY_K) and not codes.has(KEY_CTRL))
-	InputMap.load_from_project_settings()
-	_check("keys: put back for the rest of the run", _dodge_codes().has(KEY_CTRL))
+	_check("keys: K and Z dodge, and nothing else (%s)" % str(codes),
+		codes.size() == 2 and codes.has(KEY_K) and codes.has(KEY_Z))
+	_check("keys: never Ctrl, which a browser's Ctrl+W turns into closing the tab",
+		not codes.has(KEY_CTRL))
 
 
 func _dodge_codes() -> Array:

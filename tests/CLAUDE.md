@@ -44,7 +44,7 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     suite: a landed hit now stops the room for a few frames, so a check timed
     to the end of an attack that LANDS needs slack (test_arc.gd moved by 6).
   - `test_dodge.gd` - the roll, stage after stage in the empty lobby: K and
-    Ctrl, and a browser keeping K alone; all ten characters' three rows, pixel
+    Z and never Ctrl; all ten characters' three rows, pixel
     for pixel what tools/roll_pose.gd makes of the RECOLOURED sheet, and no
     roll in the source PNG; exactly 48 px in 20 frames the way the stick
     points, backwards with it at rest, the walk after, the cooldown and the

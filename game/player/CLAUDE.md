@@ -522,12 +522,13 @@ speakers positional, the one exception to that file's first line.
 
 ## The dodge - the tumble roll
 
-The fifth move, and the first off the attack button: `dodge` is K, and Ctrl
-under the little finger on WASD - on the desktop builds only. In a browser
-Ctrl+W closes the tab and no page can stop it, so the keyboard source takes
-Ctrl back out of a web build (`input_source.gd`'s `browser_keys()`). Shift was
-never a candidate: five quick presses open Windows' Sticky Keys box over the
-game. Picked from the Dodge Lab preview (option A of a roll, a volt dash and a
+The fifth move, and the first off the attack button: `dodge` is K, beside J
+for the hand on the attack key, and Z under the little finger of the hand on
+WASD, which can roll without letting go of the stick - the same two keys on
+every build. It was Ctrl once, desktop only, because in a browser Ctrl+W closes
+the tab and no page can stop it; one game on every platform won, and Z took its
+place. Shift was never a candidate: five quick presses open Windows' Sticky
+Keys box over the game. Picked from the Dodge Lab preview (option A of a roll, a volt dash and a
 side hop, https://claude.ai/artifact/2ucqkdtJrk4VmSgKE3gLU6) and shipped as
 previewed, frames and numbers both.
 

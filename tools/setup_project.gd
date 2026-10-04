@@ -68,11 +68,11 @@ func _initialize() -> void:
 	ProjectSettings.set_setting("input/move_right", _action([_key(KEY_D), _key(KEY_RIGHT)]))
 	ProjectSettings.set_setting("input/attack", _action([_key(KEY_SPACE), _key(KEY_J)]))
 	# The dodge - the tumble roll. K sits beside J for the hand on the attack
-	# key; Ctrl is under the little finger of the hand on WASD. Ctrl is the
-	# DESKTOP's second key only: in a browser Ctrl+W closes the tab and no page
-	# can stop it, so input_source.gd takes Ctrl back out of a web build. Never
-	# Shift: five quick presses open Windows' Sticky Keys box over the game.
-	ProjectSettings.set_setting("input/dodge", _action([_key(KEY_K), _key(KEY_CTRL)]))
+	# key; Z is under the little finger of the hand on WASD, while the other
+	# three hold the stick. The same two keys on every build. Never Ctrl: in a
+	# browser Ctrl+W closes the tab and no page can stop it. Never Shift: five
+	# quick presses open Windows' Sticky Keys box over the game.
+	ProjectSettings.set_setting("input/dodge", _action([_key(KEY_K), _key(KEY_Z)]))
 	# Talking to people. E is where a hand on WASD already is; Enter is for the
 	# hand that is not. Space and J advance a line too (the subtitle box takes
 	# `attack` as well), but only `interact` can START a conversation - walking

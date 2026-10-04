@@ -222,8 +222,8 @@ that tightens as the charge fills (`game/player/charge_ring.gd`). The number is
 bounded by a RATIO and not by taste: the heavy's single-target rate must stay
 under the light combo's, which at 0.75 is 21.9/s against 28/s.
 
-**The dodge is a ROLL, on K - and on Ctrl, but never in a browser**, where
-Ctrl+W closes the tab (input_source.gd drops it from a web build). 48 px in
+**The dodge is a ROLL, on K or Z, the same on every build** - never Ctrl,
+because in a browser Ctrl+W closes the tab and no page can stop it. 48 px in
 0.32 s the way the stick points, backwards with it at rest; a blow MISSES the
 body from 0.04 to 0.26 s in, while a drain, a slow and a shove still land; 0.45 s
 to cool down after it ends; it cuts a light attack or a charge short but never

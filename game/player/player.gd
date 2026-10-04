@@ -1081,7 +1081,7 @@ func _end_charge(fired: bool) -> void:
 	_sfx_fade("charge", 0.08)
 
 
-## THE DODGE, on the K key (or Ctrl, off the web). Refused while one is still
+## THE DODGE, on K or Z. Refused while one is still
 ## rolling or cooling down, and from inside the heavy and its wildfire, whose
 ## rooted seconds are part of its damage maths. Anything lighter it cuts short:
 ## a swing, a slash or an arc is dropped where it stands - what the blade had
