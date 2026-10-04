@@ -158,6 +158,18 @@ the machine that moves it has gone silent (`away`, `set_away()`, game/sync/
 CLAUDE.md's M6). `_belong()` is the one rule for the group and the collision
 shape: in the fight while neither down nor away.
 
+**Down is a seat in the stands, not a frozen screen** (the 2026-10-03
+playtest). While this machine's player is down, game.gd's `_watch()` points
+the camera at somebody still standing - first whoever is nearest the fall, so
+it goes to the fight that was going on - and the HUD says WATCHING and their
+name along the bottom. The pick sticks; the attack button moves it on to the
+next one standing; the one watched going down moves it on by itself; with
+nobody standing it stays put; and getting up takes it straight back. It
+follows the body's PICTURE (`drawn_at()`), which on a remote body glides a beat
+behind its newest step, so the camera glides with what is drawn rather than
+stepping with the wire. Nothing about it crosses the wire: every machine
+already draws every body. `tests/test_watch.gd` owns it.
+
 The HUD (`ui/hud/`, instanced by game.tscn) is deliberately dumb: game.gd wires
 `health_changed` to it, pushes starting values and pushes the pool whenever it
 moves, and it renders whatever it is fed - a bar with a percentage label, plus

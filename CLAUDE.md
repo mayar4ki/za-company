@@ -103,7 +103,9 @@ party, and each is a no-op for one (DESIGN.md's Multiplayer, M1):
 a body DOWN**, not a fade - out of the `player` group, which is how everything
 in the world already stops seeing it - and it gets up at the door 3 s later on
 the pool's life, or stays down with the pool empty, and the run ends when
-nobody is standing; **a door waits for everyone standing** and says "1/2"; and
+nobody is standing (while down, that machine's camera follows somebody still
+standing - `_watch()`, game/player/CLAUDE.md); **a door waits for everyone
+standing** and says "1/2"; and
 **the room alert is anyone's**. The player reads an *input source* rather than
 `Input` (game/player/CLAUDE.md's *The hands*), which is how a second body is
 driven, and an enemy goes for the nearest player and sticks (`target()`,

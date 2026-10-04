@@ -1446,6 +1446,14 @@ func is_down() -> bool:
 	return _down
 
 
+## Where this body is DRAWN: where it stands, plus however far its picture is
+## from that - which only a remote body's ever is, gliding a beat behind its
+## newest step (net_draw). What a camera following somebody else follows, so it
+## glides with the picture rather than stepping with the wire.
+func drawn_at() -> Vector2:
+	return global_position + _sprite.position
+
+
 ## Online: the machine that moves this body has gone silent, or been heard
 ## again (game/sync/bodies.gd) - see `away`.
 func set_away(on: bool) -> void:

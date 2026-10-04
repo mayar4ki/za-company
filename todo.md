@@ -15,7 +15,7 @@
             when it happens
     [x] Dodge incoming attacks - the tumble roll, on K (and Ctrl off the
         web); its sound is still to be cut
-    [ ] A dead player's camera follows the players still standing
+    [x] A dead player's camera follows the players still standing
     [ ] A teammate can revive a dead player, who gets up with 50% health
     [ ] Silverman's attacks hit harder - he is too weak now
     [ ] New attacks for the player after beating a boss

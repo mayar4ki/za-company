@@ -28,6 +28,9 @@ extends Node2D
 ##   through: whoever was waiting to get up gets up on the far side.
 ## - **The room alert is anyone's**: the first of them to walk out of the
 ##   doorway wakes the room for all of them.
+## - **Down is a seat in the stands**: while this machine's player is down the
+##   camera follows somebody still standing, and the attack button moves it on
+##   to the next (_watch).
 ##
 ## ## Online
 ##
@@ -124,6 +127,9 @@ var _hands: InputSource = null
 ## felled again, is not stood up a second time by the first wait running out.
 var _getting_up := {}
 var _wait := 0
+## Who this machine's camera follows while its own player is down - see
+## _watch(). Null while they stand.
+var _watching: PlayerType = null
 
 var _level: LevelType
 var _travelling := false
@@ -289,6 +295,7 @@ func current_level() -> LevelType:
 
 
 func _process(delta: float) -> void:
+	_watch()
 	_camera.global_position = _camera_target()
 	_apply_shake(delta)
 	_hold_hands(_pause_menu.is_paused() and _sync.active)
@@ -819,6 +826,49 @@ func _on_boss_said(speaker: String, text: String, seconds: float) -> void:
 	_subtitle.show_line(speaker, text, seconds)
 
 
+## Who the camera follows while this machine's player is down (the 2026-10-03
+## playtest: a screen parked on a body that cannot move reads as the game
+## having frozen). Somebody still standing - first whoever is nearest the body
+## that fell, so the camera goes to the fight that was going on rather than
+## across the building. The pick sticks; the attack button moves it on to the
+## next one standing; and it moves on by itself when the one being watched goes
+## down too. With nobody standing it stays where it is, on the last fight there
+## was, and getting up takes the camera straight back.
+##
+## Nothing crosses the wire for it: every machine already draws every body, so
+## watching somebody is only pointing a camera.
+func _watch() -> void:
+	if not _local.is_down():
+		if _watching != null:
+			_watching = null
+			_hud.set_watching("", false)
+		return
+	var standing: Array[PlayerType] = []
+	for body in _players:
+		if body != _local and not body.is_down() and not body.away:
+			standing.append(body)
+	if standing.is_empty():
+		if _watching == null:
+			_hud.set_watching("", false)
+		return
+	if not standing.has(_watching):
+		var from := _local.global_position if _watching == null else _watching.drawn_at()
+		var nearest := standing[0]
+		for body in standing:
+			if body.drawn_at().distance_to(from) < nearest.drawn_at().distance_to(from):
+				nearest = body
+		_watching = nearest
+	elif standing.size() > 1 and _local.input_source.attack_pressed():
+		_watching = standing[(standing.find(_watching) + 1) % standing.size()]
+	_hud.set_watching(String(_names.get(_watching, "")), standing.size() > 1)
+
+
+## Who the camera is following: this machine's player, or whoever _watch()
+## picked while they are down. For tests.
+func watched() -> PlayerType:
+	return _local if _watching == null else _watching
+
+
 ## Where the camera wants to be, decided per axis:
 ##
 ## - the level is wider/taller than the screen -> follow the player, stopping at
@@ -833,8 +883,9 @@ func _camera_target() -> Vector2:
 	var half := view * 0.5
 	var centre := _bounds.get_center()
 	# This machine's player, whoever else is in the room: each machine's camera
-	# follows its own, so no floor is ever too big for a party.
-	var target := _local.global_position
+	# follows its own, so no floor is ever too big for a party. Somebody else's
+	# only while this one is down (_watch), and then where their picture is.
+	var target := _local.global_position if _watching == null else _watching.drawn_at()
 	if view.x >= _bounds.size.x:
 		target.x = centre.x
 	else:
@@ -985,6 +1036,8 @@ func net_left(body: PlayerType) -> void:
 		_hud.notice("%s LEFT THE GAME" % who.to_upper(), LEFT_COLOUR,
 			LEFT_NOTICE_WIDTH, LEFT_NOTICE_SECONDS)
 	body.remove_from_group("player")
+	if body == _watching:
+		_watching = null
 	_players.erase(body)
 	_others.erase(body)
 	_names.erase(body)

@@ -901,6 +901,8 @@ one that FEELS best rather than the one that is safest.
 - **Lives are ONE shared pool of `MAX_LIVES` (3).** A player who dies gets up at
   the room's door after a short wait and spends one. With the pool empty a death
   leaves that player down, watching, and the run ends when nobody is standing.
+  Watching is literal: a player who is down has their camera on somebody still
+  standing, and the attack button moves it on to the next.
 - **A door waits for the party.** It fires only when every STANDING player is
   in the doorway, and says so meanwhile ("1/2"); a downed player is carried
   through. Travel is the host's call, and every machine loads the floor it

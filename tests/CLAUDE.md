@@ -6,7 +6,7 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
 ## The suites
 
 - `tests/` holds SceneTree-script tests: no framework, no dependencies.
-  They drive the real game with synthesized input and exit 0/1. Forty-two suites,
+  They drive the real game with synthesized input and exit 0/1. Forty-three suites,
   each extending `tests/helpers.gd` (the shared harness: checks, key synthesis,
   settings backup, node getters) and overriding `_tick(frame)`:
   - `test_menu.gd` - main menu (HOST ONLINE and JOIN ONLINE, no MODE),
@@ -320,6 +320,15 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     nobody is standing and nobody is about to be. Its own suite because every
     other one is a party of one, and must stay that way to prove solo did not
     move.
+  - `test_watch.gd` - down is a seat in the stands: a party of THREE on one
+    machine, because moving the watch on needs two to choose between. Standing,
+    the camera is your own; down, it goes to whoever is nearest the fall, says
+    WATCHING and the key along the bottom, and really frames them at 400%;
+    Space moves it on once per press; the one watched going down moves it on by
+    itself, and with one left the key is neither offered nor does anything;
+    getting up takes it straight back; and with nobody standing it stays on the
+    last fight there was until somebody gets up. Its own suite because a third
+    body would renumber every position test_party.gd checks.
   - `test_net.gd` - the `Net` autoload: a host and its guests in ONE process,
     each Net in a SubViewport with a MultiplayerAPI of its own, over ENet on
     localhost. Hosting opens a party of one; a guest's hello puts them in it,

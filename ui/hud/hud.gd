@@ -47,6 +47,13 @@ const NOTICE_HEIGHT := 16.0
 const NOTICE_PAD := 24.0
 ## The design viewport the notice is centred in.
 const VIEW_WIDTH := 640.0
+## The line a player who is down reads - see set_watching(). On the notice's
+## strip, at the bottom of the screen: under the subtitle (which ends at 314)
+## and where only this machine's own conversation would draw, and a body that is
+## down has none. Never narrower than the words "WATCHING" and a long name.
+const WATCH_TOP := 330.0
+const WATCH_WIDTH := 160.0
+const WATCH_COLOUR := TEXT
 
 ## Preloaded rather than reached for by class_name, like every other typed
 ## node in the game: global class names live in an editor-written cache.
@@ -80,6 +87,9 @@ var _rows: Array[Control] = []
 ## for - so a solo HUD never has either.
 var _ping: Label = null
 var _notice: Control = null
+## The watching line while it is up, and what it says.
+var _watch: Control = null
+var _watch_text := ""
 
 
 ## The rest of the party, one row per name, in the order game.gd keeps them.
@@ -174,28 +184,7 @@ func ping_text() -> String:
 func notice(text: String, colour: Color, width: float, seconds: float) -> void:
 	if _notice != null:
 		_notice.queue_free()
-	var w := maxf(width, ceilf(MINI.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x) + NOTICE_PAD)
-	var x := roundf((VIEW_WIDTH - w) / 2.0)
-	var holder := Control.new()
-	holder.name = "Notice"
-	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(holder)
-	var strip := ColorRect.new()
-	strip.position = Vector2(x, NOTICE_TOP)
-	strip.size = Vector2(w, NOTICE_HEIGHT)
-	strip.color = NOTICE_BACK
-	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	holder.add_child(strip)
-	var line := Label.new()
-	line.name = "Line"
-	line.text = text
-	line.position = Vector2(x, NOTICE_TOP + 1.0)
-	line.size = Vector2(w, 14.0)
-	line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	line.add_theme_font_override("font", MINI)
-	line.add_theme_font_size_override("font_size", 12)
-	line.add_theme_color_override("font_color", colour)
-	holder.add_child(line)
+	var holder := _strip("Notice", text, colour, width, NOTICE_TOP)
 	_notice = holder
 	get_tree().create_timer(seconds).timeout.connect(func() -> void:
 		if is_instance_valid(holder):
@@ -207,6 +196,60 @@ func notice_text() -> String:
 	if _notice == null or not is_instance_valid(_notice) or _notice.is_queued_for_deletion():
 		return ""
 	return (_notice.get_node("Line") as Label).text
+
+
+## While this machine's player is down, whose fight the camera is following -
+## and, when there is more than one teammate standing, the key that moves it on.
+## Empty takes the line down. game.gd asks every frame, so the strip is only
+## built again when the words change.
+func set_watching(who: String, more: bool) -> void:
+	var text := ""
+	if who != "":
+		text = "WATCHING %s" % who.to_upper()
+		if more:
+			text += "   SPACE: NEXT"
+	if text == _watch_text:
+		return
+	_watch_text = text
+	if _watch != null:
+		_watch.queue_free()
+		_watch = null
+	if text != "":
+		_watch = _strip("Watching", text, WATCH_COLOUR, WATCH_WIDTH, WATCH_TOP)
+
+
+## What the watching line says, or "". For tests.
+func watching_text() -> String:
+	return _watch_text
+
+
+## One line of the menu's small font, centred on a dark strip at `top` at least
+## `width` wide - wider if the words need it: the notice's look, which the
+## watching line borrows.
+func _strip(node_name: String, text: String, colour: Color, width: float, top: float) -> Control:
+	var w := maxf(width, ceilf(MINI.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x) + NOTICE_PAD)
+	var x := roundf((VIEW_WIDTH - w) / 2.0)
+	var holder := Control.new()
+	holder.name = node_name
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(holder)
+	var strip := ColorRect.new()
+	strip.position = Vector2(x, top)
+	strip.size = Vector2(w, NOTICE_HEIGHT)
+	strip.color = NOTICE_BACK
+	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(strip)
+	var line := Label.new()
+	line.name = "Line"
+	line.text = text
+	line.position = Vector2(x, top + 1.0)
+	line.size = Vector2(w, 14.0)
+	line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	line.add_theme_font_override("font", MINI)
+	line.add_theme_font_size_override("font_size", 12)
+	line.add_theme_color_override("font_color", colour)
+	holder.add_child(line)
+	return holder
 
 
 ## A small bar in a 1px border with a name beside it - the big bar's colours
