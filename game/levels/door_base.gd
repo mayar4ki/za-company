@@ -20,6 +20,13 @@ class_name DoorBase
 ## concedes, so the arena's gate is the same rule as every other room's. The
 ## lobby has nobody in it and is open from its first frame.
 ##
+## **And it says so** (door_lock.gd): a lamp on each jamb and a padlock in the
+## doorway, red while sealed and green once the room is beaten. What they show
+## is `sealed()`, and online that is the HOST's word: a guest's room cannot
+## work out "beaten" for itself, because the beats only run on the host, so the
+## door rides the room's snapshot (game/sync/world.gd) carrying the host's
+## answer, and a guest's door shows that.
+##
 ## **A door waits for the party.** It goes only once every STANDING player is
 ## in the doorway, and says so meanwhile ("1/2", door_count.gd). Standing is
 ## the `player` group: a body that is down has left it (player.gd's
@@ -30,6 +37,7 @@ class_name DoorBase
 signal travelled(level_path: String, spawn: StringName)
 
 const DoorCount := preload("res://game/levels/door_count.gd")
+const DoorLock := preload("res://game/levels/door_lock.gd")
 const RoomClear := preload("res://game/levels/room_clear.gd")
 ## Where the count stands, from the door's origin and turned with it: into the
 ## room, past the threshold, so it is in front of whoever is waiting.
@@ -49,6 +57,9 @@ var _used := false
 ## The party members standing in the doorway now.
 var _inside := {}
 var _count: DoorCount
+## What the host last said about this room, on a guest: -1 until it has said
+## anything, then 1 sealed or 0 open.
+var _host_sealed := -1
 
 
 func _ready() -> void:
@@ -61,6 +72,13 @@ func _ready() -> void:
 	_count.z_index = 50
 	_count.visible = false
 	add_child(_count)
+	# After the sprite in the tree, so it draws over the doorway art; it turns
+	# with the door and is drawn with it, so a player in the doorway stands in
+	# front of it.
+	var lock := DoorLock.new()
+	lock.name = "Lock"
+	add_child(lock)
+	add_to_group(&"synced")
 
 
 func _on_body_entered(body: Node2D) -> void:
@@ -123,3 +141,32 @@ func _consider() -> void:
 ## point for a door that wants a lock of its own on top.
 func can_travel() -> bool:
 	return RoomClear.beaten(get_tree(), owner)
+
+
+## Whether the room this door leads out of is still sealed - what its lamps and
+## padlock show. On the host, and solo, that is can_travel() turned round. A
+## guest shows what the host last said, and works it out itself only until the
+## first snapshot arrives - which on a floor with enemies standing in it agrees.
+func sealed() -> bool:
+	if _host_sealed >= 0 and not multiplayer.is_server():
+		return _host_sealed == 1
+	return not can_travel()
+
+
+## The room's snapshot (game/sync/world.gd): a door is placed by the level, so
+## it is at the same path on every machine and carries only the host's answer.
+func net_state() -> Array:
+	return [sealed()]
+
+
+func apply_net_state(state: Array) -> void:
+	if not state.is_empty():
+		_host_sealed = 1 if bool(state[0]) else 0
+
+
+## Nothing to draw between two snapshots. Answered anyway, because a synced
+## thing that answers it takes its state WITH the picture rather than when it is
+## heard (world.gd's _show): a door taking it a tenth of a second early would
+## open on a guest's screen before the last body there is drawn falling.
+func net_between(_a: Array, _b: Array, _weight: float) -> void:
+	pass

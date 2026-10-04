@@ -206,6 +206,7 @@ game/levels/
   level.gd            base script every level scene runs
   door_base.gd        shared: how a door tells game.gd to swap levels
   room_clear.gd       shared: whether a room is beaten - its doors and beats ask
+  door_lock.gd        shared: a sealed door's lamps and padlock
   hazard_base.gd      shared: presses take_damage() on the player it overlaps
   pickup_base.gd      shared: heal() on touch, consumed only if it healed
   <biome>/            THE ROOM - five files, and it never grows
@@ -387,8 +388,35 @@ a door that would otherwise be wrong for a frame or forever:
 A beat's doorway hold still applies: an arrival waits while a player is within
 `SAFE_RADIUS` of its threshold, and the room is not beaten while it waits. A
 player standing in a sealed doorway that a beat is due to come through holds
-both - step away and the beat lands. Nothing on screen says a door is sealed
-yet; the count over it is only ever the party's.
+both - step away and the beat lands.
+
+**A sealed door says so** (`door_lock.gd`, a `Lock` child every door makes in
+`_ready` as it makes its `Count`): a lamp on each jamb, red and pulsing while
+the room is sealed, and a red padlock hung in the doorway between them. When
+the room is beaten the lamps blink white for 0.14 s, the padlock springs open
+green and fades out by the end of the second, and the lamps stay green. A room
+open on arrival - the lobby - is green from its first frame and plays nothing.
+It was picked from a preview (D1 of the Sealed Doors artifact) and is that
+preview's numbers verbatim, checked by a pixel diff of the game against the
+preview's own drawing code; three things the preview decided:
+
+- **On the door, never above it.** At 150% the camera stops at the wall, so
+  the north doorway is on the top edge of the screen. The lock turns with the
+  door, and on the south door the padlock is mirrored inside its own box so the
+  half turn brings it back upright.
+- **A shape as well as a colour.** The lamps alone were red against green; the
+  padlock says "locked" to a player who cannot tell the two apart.
+- **Painted into a texture, not drawn as rects.** At 150% a texture is sampled
+  nearest, as the doorway art under it is, while a 1 x 1 rect has its corners
+  snapped to whole screen pixels and lands a row off. Drawn as rects, it
+  matched the preview at 100% and missed it by whole rows at 150%.
+
+**Online the lamps are the host's word.** A guest's room cannot work out
+"beaten" - its beats never run - so every door is in the room's snapshot
+(game/sync/world.gd) carrying `sealed()`, and a guest's door shows what the host
+last said. It answers `net_between()` (doing nothing) so it takes that word
+with the picture rather than a tenth of a second early, when a door could open
+before the last body there is drawn falling. That is `WIRE` 6.
 
 ## Dressing
 

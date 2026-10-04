@@ -171,6 +171,12 @@ and the beat's kill count, or the door would open on the frame that cues the
 beat it should wait for. The lobby has nobody in it and is open from its first
 frame. A suite that must walk out of a room it is not fighting beats it the
 short way, `helpers.gd`'s `_clear_room()`; `tests/test_lock.gd` owns the rule.
+**And a sealed door says so** (`game/levels/door_lock.gd`): red lamps on the
+jambs and a red padlock in the doorway, turning green when the room is beaten -
+picked from a preview and shipped pixel for pixel, painted into a texture
+because rects drawn at 150% land a row off. Online it is the HOST's word: every
+door rides the room's snapshot carrying `sealed()` (`WIRE` 6), since a guest's
+room cannot work out "beaten" for itself (game/levels/CLAUDE.md).
 
 **Three floors have a hazard that MOVES, and the rules they share are the ones
 to carry to a fourth** (game/levels/CLAUDE.md's *The clock*, *The wiring* and

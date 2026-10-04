@@ -43,7 +43,10 @@ The host is the truth for everything but where a body is:
   the snapshot lacks is gone, and goes. No spawn or despawn message to lose,
   arrive out of order or be missed by a guest still fading in. A guest's
   swing is reported by the attacker (a player's moment, below) and dealt on
-  the host; a beat (`reinforcements.gd`) is the host's alone.
+  the host; a beat (`reinforcements.gd`) is the host's alone - which is why
+  every DOOR is in the snapshot too, carrying whether the host's room is still
+  sealed: a guest's room cannot work that out, and its lamps and padlock show
+  the host's word (game/levels/door_lock.gd, `WIRE` 6).
 - **A room's own moving parts ride the same snapshot** (game/levels/CLAUDE.md's
   *Online*): a CLOCK - the studio, the dolly, the wiring - runs everywhere and
   is put right only when it drifts, DICE - the scrubbers - are the host's and

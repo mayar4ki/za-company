@@ -94,8 +94,10 @@ const PROTOCOL := 3
 ## 3 is M4: every message about the run carries the host's time. 4 is the
 ## dodge: a body's step says whether it is rolling, and the host trusts it. 5 is
 ## the revive: a body's step says who it is reviving, and the host says how far
-## along a revive is and when somebody is up (game/revive.gd).
-const WIRE := 5
+## along a revive is and when somebody is up (game/revive.gd). 6 is the sealed
+## door: every door is in the room's snapshot carrying whether the host's room
+## is beaten, because a guest's cannot tell (game/levels/door_lock.gd).
+const WIRE := 6
 ## Ours (server/README.md). The live service is what a RELEASE talks to; dev's
 ## own copy is what dev builds and the editor talk to - see signaling_url().
 const LIVE_SIGNALING := "wss://za-company.mayar-deeb.dev"

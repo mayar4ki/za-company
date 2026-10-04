@@ -17,6 +17,9 @@ extends "res://tests/coop.gd"
 ## - **What exists is the snapshot**: a body the host kills is gone on the
 ##   guest, a reinforcement the host lets in appears there - made from the
 ##   scene its entry carries - and goes when it dies.
+## - **A door is the host's word**: the guest's doors show the host's room
+##   sealed while anybody stands in it, and start their unlock when it is
+##   beaten - a guest's own room could not tell, its beats never run.
 ##
 ## Every body but the one a step is about stands still (speed 0 on the HOST,
 ## where speed means anything), so a crowd never decides a check.
@@ -35,7 +38,7 @@ func _init() -> void:
 func _plan() -> Array[Callable]:
 	return [_together, _still_room, _same_room, _moved, _warden_winds,
 		_warden_lands, _face_guard, _guard_strikes, _guest_swings, _guard_dies,
-		_reinforcement, _reinforcement_dies]
+		_reinforcement, _reinforcement_dies, _doors_sealed, _doors_open]
 
 
 func _room_node(path: String) -> Node:
@@ -167,3 +170,25 @@ func _reinforcement_dies() -> void:
 	_expect("snapshot: and goes there when it dies here (%s)" % arrived, "enemies", [],
 		func(theirs: Dictionary) -> bool:
 			return not theirs.is_empty() and not theirs.has(arrived))
+
+
+## A guest's room cannot work out whether it is beaten - its beats never run -
+## so its doors show the HOST's word, carried in the snapshot
+## (game/levels/door_base.gd's sealed()). Hellfire still has bodies standing.
+func _doors_sealed() -> void:
+	_check("host: hellfire is still sealed with its bodies standing",
+		bool(_room_node("Props/Exit").call("sealed")))
+	_expect("doors: the guest's way up shows the host's room sealed", "get",
+		["Props/Exit", ["_host_sealed"]], func(a) -> bool:
+			return a is Array and a[0] == 1)
+
+
+## Beaten the short way on the host; the guest's lamps and padlock follow.
+func _doors_open() -> void:
+	_clear_room()
+	_check("host: and beaten, both ways open",
+		not bool(_room_node("Props/Exit").call("sealed"))
+			and not bool(_room_node("Props/Return").call("sealed")))
+	_expect("doors: the guest hears it, and its lock starts the unlock", "get",
+		["Props/Return/Lock", ["_since"]], func(a) -> bool:
+			return a is Array and float(a[0]) >= 0.0)

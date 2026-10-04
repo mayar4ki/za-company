@@ -40,7 +40,11 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     - and through the arrival, then going the frame the last body drops with
     nobody stepping off. Then the content studio: both ways shut while its
     cast stands, standing in the way back down goes nowhere, and a beat cued
-    past the room's whole population does not hold it shut forever.
+    past the room's whole population does not hold it shut forever. And the
+    lamps and padlock on the way: green with none on the open lobby, red and
+    padlocked on both doors of a sealed room (upright on the turned one), and
+    an unlock watched frame by frame - white blink, padlock sprung green,
+    fading, gone - with no unlock played in a room open on arrival.
   - `test_combat.gd` - guard telegraph and interrupts, wraith, warden, heavy,
     and the leash: that losing sight of the player does not stop a chase, that
     it ends 2.5s later, that the body walks back to the spot it was placed on,
@@ -439,7 +443,9 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     the slow it lands is the guest's own body's, the guard's blow hurts the
     guest and the guest's swing hurts the guard, a body the host kills is gone
     on the guest, and a reinforcement the host lets in appears there - made
-    from the scene its snapshot entry carries - and goes when it dies. Every
+    from the scene its snapshot entry carries - and goes when it dies. Last,
+    the guest's doors show the host's room sealed while bodies stand, and start
+    their unlock once the host beats it. Every
     enemy but the one a step is about stands still, so a crowd never decides a
     check.
   - `test_coop_rooms.gd` - the same two machines, and the ROOMS: the studio's

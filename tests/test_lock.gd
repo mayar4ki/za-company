@@ -33,6 +33,8 @@ func _tick(frame: int) -> void:
 		32:
 			_check("lock: the lobby has nobody in it to beat, so its door is open",
 				get_nodes_in_group("enemies").is_empty() and _exit().call("can_travel"))
+			_check("lamps: and says so - green, no padlock (%s)" % [_look(_exit())],
+				_shows_open(_exit()))
 			for at in [Vector2(104, 60), Vector2(436, 64)]:
 				_placed.append(_place(at))
 			# The beat the second kill cues, through the far door from the one
@@ -51,6 +53,9 @@ func _tick(frame: int) -> void:
 		60:
 			_check("lock: two standing, and the party in the doorway goes nowhere",
 				not _exit().call("can_travel") and _still_in("Lobby"))
+			# The same door, sealed again by the bodies placed in it.
+			_check("lamps: red, with the padlock shut on the door (%s)" % [_look(_exit())],
+				_shows_sealed(_exit()))
 		62:
 			_placed[0].call("take_damage", 999)
 		70:
@@ -91,6 +96,13 @@ func _tick(frame: int) -> void:
 				not get_nodes_in_group("enemies").is_empty()
 					and not _exit().call("can_travel")
 					and not back.call("can_travel"))
+			_check("lamps: both doors red and padlocked (%s / %s)"
+				% [_look(_exit()), _look(back)],
+				_shows_sealed(_exit()) and _shows_sealed(back))
+			# The way back down is the north door turned half a turn; its
+			# padlock is mirrored inside its box so the turn brings it upright.
+			_check("lamps: the padlock on the way back down is turned upright",
+				_look(back)[5] == true and _look(_exit())[5] == false)
 			# Into the way back down: a door turned half a turn, so its
 			# threshold is the same 16 px in front of it, pointing north.
 			_player().global_position = back.to_global(Vector2(0, 16))
@@ -113,11 +125,65 @@ func _tick(frame: int) -> void:
 			_check("lock: and the way back down took the party down (got %s)"
 				% ("<none>" if _level() == null else _level().name),
 				_level() != null and _level().name == "Lobby")
+			# Nothing was won in a room that was open on arrival, so nothing
+			# is played: green from the first frame.
+			_check("lamps: a room open on arrival plays no unlock (%s)" % [_look(_exit())],
+				_shows_open(_exit()))
+			# The unlock, watched rather than walked through: one body, and
+			# the player off in the room rather than in a doorway, where the
+			# party would go on the frame it died and take the door with it.
+			_placed = [_place(Vector2(104, 60))]
+			_player().global_position = Vector2(272, 150)
+		283:
+			_check("lamps: one body placed seals it again (%s)" % [_look(_exit())],
+				_shows_sealed(_exit()))
+			_placed[0].call("take_damage", 999)
+		286:
+			# The first BLINK_FOR of the unlock: the lamps blink white, and the
+			# padlock holds shut through it.
+			var look := _look(_exit())
+			_check("lamps: the room beaten, the lamps blink white (%s)" % [look],
+				look[0] == _lock_const(_exit(), "BLINK") and look[2] and not look[3])
+		300:
+			var look := _look(_exit())
+			_check("lamps: then green, and the padlock springs open green (%s)" % [look],
+				look[0] == _lock_const(_exit(), "GREEN") and look[2] and look[3]
+					and look[4] == 1.0)
+		330:
+			var look := _look(_exit())
+			_check("lamps: past halfway the open padlock fades (%s)" % [look],
+				look[2] and look[3] and look[4] > 0.0 and look[4] < 1.0)
+		360:
+			_check("lamps: and is gone, leaving the lamps green (%s)" % [_look(_exit())],
+				_shows_open(_exit()) and _exit().call("can_travel"))
 			_finish()
 
 
 func _exit() -> Node:
 	return _level().get_node("Props/Exit")
+
+
+## What a door's lamps and padlock show now - door_lock.gd's own `_look()`:
+## [lamp core, lamp glow, padlock drawn, padlock open, its alpha, turned].
+func _look(door: Node) -> Array:
+	return door.get_node("Lock").call("_look")
+
+
+func _lock_const(door: Node, name: String) -> Variant:
+	return (door.get_node("Lock").get_script() as Script).get_script_constant_map()[name]
+
+
+## Red - lit or dim, it pulses - with the padlock drawn and shut.
+func _shows_sealed(door: Node) -> bool:
+	var look := _look(door)
+	return look[0] in [_lock_const(door, "RED"), _lock_const(door, "RED_DIM")] \
+		and look[2] and not look[3]
+
+
+## Green, and no padlock.
+func _shows_open(door: Node) -> bool:
+	var look := _look(door)
+	return look[0] == _lock_const(door, "GREEN") and not look[2]
 
 
 ## On `room` and not on the way out of it.
