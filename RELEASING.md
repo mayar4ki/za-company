@@ -159,44 +159,22 @@ the server as `server/README.md` describes, and install the deploy key again.
 
 ## Trying a build without releasing
 
-A push to `develop` that changes `VERSION` or what the builds are made of
+A push to `develop` that changes what the builds are made of
 (`export_presets.cfg`, the workflow, or anything in `tools/release/`) runs
 the whole build as a **dry run**: Windows, macOS, web and the server's
 checks. It publishes and deploys nothing, and keeps the files on the run's
 page in the Actions tab for a week. **Actions -> Release -> Run
 workflow** on `develop` does the same on demand.
 
-On `develop` those are always **dev builds** - exactly what a deploy to dev
-ships (below) - so any run there that goes green can be put on dev later
-without being built again. The release's own packaging (its numbered file
-names, the installer without the dev identity) is first built on `main`, by
-the release itself. If that run fails, nothing is published and the number
-is not spent: fix it and push again, or *Run workflow* on `main`.
-
 ## Deploying to dev
 
 To try `develop` without a release - or hand it to a tester - deploy it to
-dev. Two ways, both by hand:
+dev: **Actions -> Release -> Run workflow**, branch `develop`, tick **Deploy
+to dev**, **Run workflow**. It never runs on its own, because `develop` takes
+many half-finished pushes and a dev site that changes under every one of them
+is a dev site nobody can test.
 
-- **Build it and deploy it**: **Actions -> Release -> Run workflow**, branch
-  `develop`, tick **Deploy to dev**, **Run workflow**.
-- **Deploy a build that already went green**, without building it again:
-  **Actions -> Deploy dev -> Run workflow**, branch `develop`. Leave its box
-  blank for the newest green build of `develop`, or paste a Release run's
-  number or URL. This is the one for a dry run that has just finished - after
-  a `VERSION` bump on `develop`, say - and that run's summary says so. A
-  `develop` build keeps its files for a week; after that, build again.
-
-Neither runs on its own, because `develop` takes many half-finished pushes
-and a dev site that changes under every one of them is a dev site nobody can
-test. Mind what *already green* means: most pushes to `develop` build nothing
-(only the paths above do), so the newest build can be behind the branch.
-Deploy dev warns how many commits behind, and the first way is how to ship
-`develop` as it is now.
-
-The same four builds gate it exactly as they gate a release - Deploy dev
-refuses a run that did not go green, or that is not a Release run on
-`develop` - and then:
+The same four builds run and gate it exactly as they gate a release, and then:
 
 | What | Where |
 |---|---|
@@ -236,13 +214,12 @@ a signaling change; the release's `server` job checks the Caddyfile with Caddy
 itself and the compose file with Compose.
 
 Ticking the box on `main` is refused: there, a release is a `VERSION` change.
-And Release runs only from `main` or `develop`, Deploy dev only from
-`develop`: a tag or any other branch is refused, box or not, because a deploy
-to dev from one would put that old code on the dev site. GitHub still LISTS
-every branch and tag under "Use workflow from" and shows the box on all of
-them - neither can be hidden - so the refusal is the workflow's first job
-saying no within seconds. Keep the repository to the two branches and the
-list stays short.
+And the workflow runs only from `main` or `develop`: a tag or any other branch
+is refused, box or not, because a deploy to dev from one would put that old
+code on the dev site. GitHub still LISTS every branch and tag under "Use
+workflow from" and shows the box on all of them - neither can be hidden - so
+the refusal is the workflow's first job saying no within seconds. Keep the
+repository to the two branches and the list stays short.
 
 **A step a deploy to dev needs arrives with a release.** The dev site, its
 signaling and the steps that fill them live in the server's own files (the

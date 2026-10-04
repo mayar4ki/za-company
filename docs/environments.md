@@ -9,7 +9,7 @@ is deployed is RELEASING.md (*Deploying* and *Deploying to dev*).
 |---|---|---|
 | Web game | https://za-company.mayar-deeb.dev | https://dev.za-company.mayar-deeb.dev |
 | Windows and macOS files | a versioned GitHub Release (`v0.1.1`) | the rolling `dev` pre-release |
-| Started by | `VERSION` changing on `main` | Release's Run workflow on `develop` with *Deploy to dev* ticked, or Deploy dev on a green `develop` build |
+| Started by | `VERSION` changing on `main` | Run workflow on `develop`, *Deploy to dev* ticked |
 | Server folder | `web/game/` | `web/dev-game/` |
 | Signaling | `server`, port 8765, the release's `server/` | `za-dev`, port 8766, the dev deploy's `server/` |
 | Desktop builds can tell | (no `dev` feature) | `OS.has_feature("dev")` |
@@ -18,11 +18,11 @@ Separate: the web builds, the desktop builds, the signaling service, and what
 starts each deploy.
 
 Shared: the droplet, its Caddy, coturn, the deploy key, and the workflow
-(`release.yml` builds both with the same jobs; `deploy_dev.yml` ships
-dev's). Of the server's own files only `signaling/` can reach dev first - a
-deploy to dev rebuilds dev's copy of it - and the Caddyfile, the compose file
-and `deploy.sh` still reach the server only with a **release** - rehearsed
-first on a throwaway runner, but never tried on dev.
+(`release.yml` builds both with the same jobs). Of the server's own files only
+`signaling/` can reach dev first - a deploy to dev rebuilds dev's copy of it -
+and the Caddyfile, the compose file and `deploy.sh` still reach the server
+only with a **release** - rehearsed first on a throwaway runner, but never
+tried on dev.
 
 ## When sharing bites
 

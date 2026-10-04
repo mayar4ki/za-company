@@ -219,9 +219,8 @@ the real thing, keeping its three members exactly as section 4 defines them.
 If something in Parts A or B looks wrong, tell the owner rather than changing
 it: two people fixing the same file is how a shared core turns into two.
 
-- **First, check rather than assume:** mount a release's or pre-release's
-  `.dmg` (not a dry run's: on `develop` every build is the DEV app, under the
-  name "The New Hire (dev)") and note the exact name of the `.app` inside
+- **First, check rather than assume:** mount a dry-run `.dmg` (from a dry run's
+  *Artifacts*, or a pre-release) and note the exact name of the `.app` inside
   (expected "The New Hire.app") and of the binary in `Contents/MacOS/`.
 - **`refusal(executable_path)`:** find the bundle (three levels up from
   `.../The New Hire.app/Contents/MacOS/<binary>`). Refuse, and the player

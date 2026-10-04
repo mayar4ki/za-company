@@ -18,9 +18,8 @@ environments.md.
 | The server's `.env` | Nowhere | Edited by hand on the server, and it moves both |
 
 A deploy to dev is always started by hand (Actions -> Release -> Run workflow
-on `develop`, *Deploy to dev* ticked; or Actions -> Deploy dev, which ships a
-`develop` build that already went green) and never touches anything
-production reads. RELEASING.md has both flows step by step.
+on `develop`, *Deploy to dev* ticked) and never touches anything production
+reads. RELEASING.md has both flows step by step.
 
 ## Decided and done
 
