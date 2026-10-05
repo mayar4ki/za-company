@@ -20,9 +20,11 @@ extends Control
 ## Guest unless a name was saved, once per page load.
 
 const MENU_SCENE := "res://ui/main_menu/main_menu.tscn"
+const SELECT_SCENE := "res://ui/character_select/character_select.tscn"
 const GAME_SCENE := "res://game/game.tscn"
 const GameType := preload("res://game/game.gd")
 const Opening := preload("res://ui/lobby/opening.gd")
+const CharacterSelect := preload("res://ui/character_select/character_select.gd")
 const Roster := preload("res://game/player/characters/roster.gd")
 
 ## Where the name lives, which the character select writes.
@@ -55,14 +57,17 @@ static var _link_spent := false
 ## Whether this machine went in as the host. Net has forgotten by the time a
 ## refusal says why, and it decides which screen the refusal is said on.
 var _hosting := false
+## Whether the page's join link brought this machine here, past the character
+## select - so there is no select behind it to go back to.
+var _by_link := false
 
 
 func _ready() -> void:
 	Music.play(Music.MENU)
 	_join.connect("join_requested", _on_join_requested)
-	_join.connect("back_requested", _to_menu)
+	_join.connect("back_requested", _back.bind(Opening.View.JOIN))
 	_host.connect("open_requested", _on_open_requested)
-	_host.connect("back_requested", _to_menu)
+	_host.connect("back_requested", _back.bind(Opening.View.HOST))
 	_room.connect("leave_requested", _on_leave)
 	# Methods rather than lambdas: a connection to a method is dropped when this
 	# screen is freed, and Net outlives every screen.
@@ -79,6 +84,7 @@ func _ready() -> void:
 		_show(_room)
 	elif link.has("join"):
 		_link_spent = true
+		_by_link = true
 		_show(_join)
 		_join.call("joining", String(link["join"]))
 		Net.join(String(link["join"]), _name("GUEST"), _character(), bool(link.get("relay", false)))
@@ -137,9 +143,17 @@ func _on_refused(reason: String) -> void:
 		_join.call("refused", reason, message)
 
 
-func _to_menu() -> void:
+## One screen back, which is the character select that led here - set to come
+## back to this same screen, so BACK and a pick undo each other. Only a page
+## opened by a join link has no select behind it, and goes home instead.
+func _back(view: Opening.View) -> void:
 	Net.leave()
-	get_tree().change_scene_to_file(MENU_SCENE)
+	if _by_link:
+		get_tree().change_scene_to_file(MENU_SCENE)
+		return
+	Opening.view = view
+	CharacterSelect.next_scene = scene_file_path
+	get_tree().change_scene_to_file(SELECT_SCENE)
 
 
 ## Everybody into the run, in the roster's order, which is the same order on

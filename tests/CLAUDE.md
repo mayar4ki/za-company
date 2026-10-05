@@ -405,8 +405,10 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     moves and the focus going where a vanished one was; a private game's code
     box (a short code asked again, capitals, the join going with the game's id,
     `wrong_code` keeping the box up, Escape closing only the box); a refusal on
-    the line, the server unreachable, nobody hosting, Escape to the menu; then
-    the host screen (public by default and remembered, the difficulty stepped
+    the line, the server unreachable, nobody hosting, Escape one screen back -
+    to the character select, still on its way online - and again to the menu;
+    then the host screen (Escape back to the select and a pick returning to the
+    HOST screen, not the list; public by default and remembered, the difficulty stepped
     round and saved) and a room hosted on ENet: a local game has no code and
     no PUBLIC switch, one seat per MAX_PARTY with the host's own marked HOST
     and no KICK; a guest from a SubViewport taking the second seat with KICK

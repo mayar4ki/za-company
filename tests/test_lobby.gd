@@ -37,7 +37,8 @@ var _since := 0
 func _tick(frame: int) -> void:
 	if frame == 2:
 		_steps = [_menu, _select, _join_screen, _listed, _relisted, _private, _wrong_code,
-			_refusals, _back_to_menu, _host_route, _host_screen, _host_local, _hosted, _join,
+			_refusals, _back_to_select, _back_to_menu, _host_route, _host_screen, _host_back,
+			_host_again, _host_local, _hosted, _join,
 			_seated, _kick_ask, _kick_go, _rejoin, _relay_and_link, _public_switch, _start,
 			_in_game, _host_left_escape, _host_left_menu, _host_gone]
 	if frame < 3:
@@ -259,10 +260,19 @@ func _refusals() -> void:
 			and _text("JoinHint") == "ESC BACK")
 
 
+## One screen at a time: the join screen backs out to the character select
+## that led to it, still on its way online, and only that goes home.
+func _back_to_select() -> void:
+	_key(KEY_ESCAPE, true)
+	_key(KEY_ESCAPE, false)
+	_wait("join: Escape backs out to the character select, still on its way online",
+		func() -> bool: return _on(SELECT).call() and (_node("NameEdit") as Control).visible)
+
+
 func _back_to_menu() -> void:
 	_key(KEY_ESCAPE, true)
 	_key(KEY_ESCAPE, false)
-	_wait("join: Escape backs out to the main menu", _on(MENU))
+	_wait("select: and Escape from there is the main menu", _on(MENU))
 
 
 func _host_route() -> void:
@@ -275,6 +285,18 @@ func _host_screen() -> void:
 	_wait("select: picking somebody opens the host screen", func() -> bool:
 		return (_on(LOBBY).call() and (_node("Host") as Control).visible
 			and not (_node("Join") as Control).visible))
+
+
+func _host_back() -> void:
+	_key(KEY_ESCAPE, true)
+	_key(KEY_ESCAPE, false)
+	_wait("host: Escape backs out to the character select", _on(SELECT))
+
+
+func _host_again() -> void:
+	(current_scene.get_node("%Roster/reem") as Button).pressed.emit()
+	_wait("select: and a pick from there is the HOST screen again, not the list",
+		func() -> bool: return _on(LOBBY).call() and (_node("Host") as Control).visible)
 
 
 func _host_local() -> void:
