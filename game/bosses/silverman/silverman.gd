@@ -16,11 +16,11 @@ extends "res://game/bosses/boss_base.gd"
 ## fight gets more crowded rather than faster, which is the only escalation
 ## available to a man who never hurries:
 ##
-## - **The Handshake** (288 -> 192 solo): the crossing and the glare. Standard
-##   interrupts. The fair phase.
-## - **The Meeting** (192 -> 96): the split arrives. One interrupt, then a long
-##   lockout - you get one.
-## - **The Performance Review** (96 -> 0): the room goes cold, standing near
+## - **The Handshake** (100% -> 75%, 288 -> 216 solo): the crossing and the
+##   glare. Standard interrupts. The fair phase, and the short one.
+## - **The Meeting** (75% -> 50%, 216 -> 144): the split arrives. One
+##   interrupt, then a long lockout - you get one.
+## - **The Performance Review** (50% -> 0): the room goes cold, standing near
 ##   him costs health on its own, and the prism and the glass ceiling arrive.
 ##   Fully uninterruptible.
 ##
@@ -90,8 +90,8 @@ const LOCKOUT := {1: 1.2, 2: 3.0, 3: 3.0}
 
 ## Phase boundaries as fractions of his own max, so retuning his health in the
 ## scene moves the phases with it instead of stranding them at 128 and 64.
-const PHASE_TWO := 2.0 / 3.0
-const PHASE_THREE := 1.0 / 3.0
+const PHASE_TWO := 0.75
+const PHASE_THREE := 0.5
 
 ## The dash, beat by beat: seconds held, and where he is along the crossing in
 ## world px from where he started. It is a POSITION CURVE and nothing else -

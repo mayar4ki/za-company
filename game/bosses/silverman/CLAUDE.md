@@ -106,15 +106,20 @@ ADDING a mechanic and removing nothing, the interrupt window narrowing on every
 step. The fight gets more crowded rather than faster, which is the only
 escalation available to a man who never hurries.
 
-`tier()` is the phase, taken off fractions of his own max health rather than the
-literal 192 and 96, so retuning his HP - or a party adding to it - moves the
-phases with it (solo numbers below):
+`tier()` is the phase, taken off fractions of his own max health (`PHASE_TWO`
+0.75, `PHASE_THREE` 0.5) rather than the literal 216 and 144, so retuning his
+HP - or a party adding to it - moves the phases with it (solo HP below):
 
-| phase | HP | adds | interrupts |
-|---|---|---|---|
-| The Handshake | 288-192 | the crossing, the glare | standard (`commit` 0.65) |
-| The Meeting | 192-96 | the split | one, then 3 s (`commit` 0.40) |
-| The Performance Review | 96-0 | the prism, the glass ceiling, the cold room | none (`commit` 0.0) |
+| phase | health | HP | adds | interrupts |
+|---|---|---|---|---|
+| The Handshake | 100-75% | 288-216 | the crossing, the glare | standard (`commit` 0.65) |
+| The Meeting | 75-50% | 216-144 | the split | one, then 3 s (`commit` 0.40) |
+| The Performance Review | 50-0% | 144-0 | the prism, the glass ceiling, the cold room | none (`commit` 0.0) |
+
+The ladder used to be even thirds, and on 2026-10-05 it was moved up to
+75 / 50: with only the glare to pick in the first phase, a third of his health
+was a long time to watch one attack, so the first two rungs are a quarter each
+and the full set owns the last half.
 
 `COMMIT` and `LOCKOUT` are set per phase as each attack begins, because the base
 has one dial for each and that is the only place they can narrow over a fight -
@@ -286,10 +291,12 @@ build_levels.gd cuts nothing through that wall and the boss-door swap has
 nothing to swap. Beating him opens no floor - what follows is the ending.
 
 His floor's beat is quarters of whatever he opens at (`at_boss_fraction` 0.75 /
-0.5 / 0.25), which solo is 216 / 144 / 72 of 288. They sit deliberately OFF his
-phase boundaries (two thirds and a third), at any party size:
-one thing to read at a time was the whole argument for the arena being empty,
-and it applies just as much to two clocks running on the same health bar.
+0.5 / 0.25), which solo is 216 / 144 / 72 of 288. They were authored to sit OFF
+his phase boundaries, at any party size: one thing to read at a time was the
+whole argument for the arena being empty, and it applies just as much to two
+clocks running on the same health bar. **Since the ladder moved to 75 / 50 the
+first two land ON them** - the herald and the arrival come on the same blow -
+and the beats were not moved with it.
 
 **He is Silverman, and it is his office.** That was the open question here and
 it is closed: there is no boss above him and no rename coming. The bar says

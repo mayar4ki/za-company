@@ -328,9 +328,9 @@ func _tick(frame: int) -> void:
 			_check("silverman: a blow that big shakes the room (%d)" % _shakes,
 				_shakes >= 1)
 		400:
-			# ---- THE MEETING. 192, and the split arrives -------------------
+			# ---- THE MEETING. Under 75%, and the split arrives -------------
 			_sv.call("take_damage", 108)
-			_check("silverman: at two thirds he is in his second phase (%s at %s HP)"
+			_check("silverman: under 75%% he is in his second phase (%s at %s HP)"
 				% [_sv.call("tier"), _sv.get("health")],
 				int(_sv.call("tier")) == 2 and _sv.get("health") == 180)
 			_check("silverman: a phase announces itself (%.1f s)" % _sv.get("herald"),
@@ -368,9 +368,9 @@ func _tick(frame: int) -> void:
 			_check("silverman: the copy is gone a second and a half later (%d)"
 				% _copies().size(), _copies().is_empty())
 		600:
-			# ---- THE PERFORMANCE REVIEW. 96, and the room goes cold --------
+			# ---- THE PERFORMANCE REVIEW. Under 50%, and the room goes cold --
 			_sv.call("take_damage", 90)
-			_check("silverman: at a third he is in his last phase (%s at %s HP)"
+			_check("silverman: under 50%% he is in his last phase (%s at %s HP)"
 				% [_sv.call("tier"), _sv.get("health")],
 				int(_sv.call("tier")) == 3 and _sv.get("health") == 90)
 		700:
