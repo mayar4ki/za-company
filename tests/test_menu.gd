@@ -123,6 +123,11 @@ func _tick(frame: int) -> void:
 				box.size.x <= _base_viewport().x and box.size.y <= _base_viewport().y)
 			_check("settings: display dropdown offers windowed and fullscreen",
 				_mode_option(current_scene).item_count == 2)
+			# The main menu's buttons are still behind the overlay, visible and
+			# focusable, and the arrows used to find them: every other Down
+			# landed on one, and WINDOW SIZE was never reached.
+			_check("settings: Down walks every row and wraps (%s)" % _walk_down(),
+				_walk_down() == "ModeOption WindowSizeOption ZoomOption DifficultyOption BackButton ModeOption")
 			# DIFFICULTY is the fourth row. Everything here is synchronous,
 			# including an enemy's _ready reading its numbers the moment it is
 			# added, so it is all checked inside this one frame.
@@ -179,6 +184,10 @@ func _tick(frame: int) -> void:
 			# track the window rather than assert a mode of its own.
 			_check("settings: window size dropdown tracks the window mode",
 				_window_size_option(current_scene).disabled == _is_fullscreen())
+			_check("settings: and Down steps over it while it is greyed out (%s)" % _walk_down(),
+				_walk_down() == ("ModeOption ZoomOption DifficultyOption BackButton ModeOption"
+					if _is_fullscreen()
+					else "ModeOption WindowSizeOption ZoomOption DifficultyOption BackButton ModeOption"))
 			_pick(_mode_option(current_scene), 0)
 		44:
 			_check("settings: switching back to windowed is saved",
@@ -207,3 +216,16 @@ func _tick(frame: int) -> void:
 				and saved.get_value("display", "window_size", Vector2i.ZERO)
 					== _first_window_size())
 			_finish()
+
+
+## The settings panel's rows in the order Down visits them, from WINDOW MODE
+## round to wherever the chain ends - the same lookup an arrow press makes.
+func _walk_down() -> String:
+	var names: PackedStringArray = []
+	var at: Control = _mode_option(current_scene)
+	for i in 6:
+		if at == null:
+			break
+		names.append(at.name)
+		at = at.find_valid_focus_neighbor(SIDE_BOTTOM)
+	return " ".join(names)

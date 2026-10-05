@@ -135,6 +135,33 @@ func _size_label(size: Vector2i) -> String:
 ## dropdown greys out rather than lying about having an effect.
 func _update_window_size_availability() -> void:
 	_window_size.disabled = Display.is_fullscreen()
+	_chain_focus()
+
+
+## The arrows walk the panel's own rows and nothing else. Left to Godot's
+## geometric search, a Down from a row found the host's buttons first - the
+## main menu's still sit behind the overlay, visible and focusable - so every
+## other press vanished onto a button nobody could see, and WINDOW SIZE was the
+## one skipped. Rebuilt whenever a row comes or goes: a disabled WINDOW SIZE
+## (fullscreen) and a hidden DIFFICULTY (the pause menu's copy) are stepped
+## over, and the ends wrap.
+func _chain_focus() -> void:
+	var rows: Array[Control] = []
+	for c: Control in [_mode, _window_size, _zoom, _difficulty, _back_button]:
+		if c.visible and not (c is BaseButton and (c as BaseButton).disabled):
+			rows.append(c)
+	for i in rows.size():
+		var row := rows[i]
+		var up := rows[i - 1].get_path()
+		var down := rows[(i + 1) % rows.size()].get_path()
+		row.focus_neighbor_top = up
+		row.focus_previous = up
+		row.focus_neighbor_bottom = down
+		row.focus_next = down
+		# Sideways means nothing on a column of rows, and would otherwise go
+		# looking behind the overlay too.
+		row.focus_neighbor_left = row.get_path()
+		row.focus_neighbor_right = row.get_path()
 
 
 func _on_mode_selected(index: int) -> void:
