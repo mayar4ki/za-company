@@ -8,8 +8,9 @@ extends Control
 ##   PRIVATE switch and KICK.
 ##
 ## The main menu's JOIN ONLINE and HOST ONLINE say which screen opens first
-## (opening.gd), and the character select on the way asked the name and the
-## body. This file only ROUTES: which screen is up, what a refusal says and on
+## (opening.gd), and the character select on the way asked who to play - which
+## is also who you are called, since nobody types a name (net.gd's *Who plays
+## whom*). This file only ROUTES: which screen is up, what a refusal says and on
 ## which screen, and START turning the party into a run. Like every screen
 ## here it is a view of the `Net` autoload and keeps no party state, which is
 ## what lets a suite host through `Net.host_local()` and find the room already
@@ -17,7 +18,7 @@ extends Control
 ##
 ## On the web the ADDRESS is the way in from a phone: `#join=CODE` (and `&relay`
 ## after it to force the relay, for testing) joins that room on arrival, as
-## Guest unless a name was saved, once per page load.
+## the character last picked, once per page load.
 
 const MENU_SCENE := "res://ui/main_menu/main_menu.tscn"
 const SELECT_SCENE := "res://ui/character_select/character_select.tscn"
@@ -26,9 +27,6 @@ const GameType := preload("res://game/game.gd")
 const Opening := preload("res://ui/lobby/opening.gd")
 const CharacterSelect := preload("res://ui/character_select/character_select.gd")
 const Roster := preload("res://game/player/characters/roster.gd")
-
-## Where the name lives, which the character select writes.
-const SETTINGS := &"online"
 
 ## What a refusal says to a player, by Net's reason code.
 const REASONS := {
@@ -87,7 +85,7 @@ func _ready() -> void:
 		_by_link = true
 		_show(_join)
 		_join.call("joining", String(link["join"]))
-		Net.join(String(link["join"]), _name("GUEST"), _character(), bool(link.get("relay", false)))
+		Net.join(String(link["join"]), _character(), bool(link.get("relay", false)))
 	elif view == Opening.View.HOST:
 		_show(_host)
 	else:
@@ -112,12 +110,12 @@ func _show(view: Control) -> void:
 
 func _on_join_requested(room_id: String, code: String) -> void:
 	_hosting = false
-	Net.join_listed(room_id, code, _name("PLAYER"), _character())
+	Net.join_listed(room_id, code, _character())
 
 
 func _on_open_requested(public: bool) -> void:
 	_hosting = true
-	Net.host(_name("PLAYER"), _character(), public)
+	Net.host(_character(), public)
 
 
 func _on_in_room(_code := "") -> void:
@@ -169,11 +167,6 @@ func _on_run_started(rows: Array) -> void:
 			"local": int(row["peer"]) == me})
 	GameType.next_party = party
 	get_tree().change_scene_to_file(GAME_SCENE)
-
-
-func _name(fallback: String) -> String:
-	var saved := String(Settings.get_value(SETTINGS, &"name", fallback)).strip_edges()
-	return saved if saved != "" else fallback
 
 
 func _character() -> String:

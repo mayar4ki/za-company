@@ -24,6 +24,17 @@ extends Node
 ## two builds that do not speak the same game are refused there, the way the
 ## signaling service refuses a client on another `PROTOCOL`.
 ##
+## ## Who plays whom
+##
+## Nobody types a name: a player is called what their character is called
+## (`name_of()`), so no two in a party playing the same character is also no
+## two going by the same name. The host keeps it so. A guest whose hello asks
+## for a character somebody already plays is seated anyway, on the next one
+## round the cast that nobody does, its row saying what it asked for (`taken`)
+## - never turned away - and a guest may move to any free one while waiting
+## (`choose()`). The host keeps the one it opened the room with, because that
+## is the one the list of games shows.
+##
 ## ## The list of games
 ##
 ## Every room is in the list of games (server/signaling/rooms.py's header),
@@ -83,6 +94,7 @@ const RtcLink := preload("res://autoload/net/rtc_link.gd")
 const Ping := preload("res://autoload/net/ping.gd")
 const RoomList := preload("res://autoload/net/room_list.gd")
 const Heads := preload("res://game/heads.gd")
+const Roster := preload("res://game/player/characters/roster.gd")
 
 ## The signaling service's protocol (server/signaling/main.py), which refuses
 ## any other with `version`. 3 is the list of open games.
@@ -96,8 +108,10 @@ const PROTOCOL := 3
 ## the revive: a body's step says who it is reviving, and the host says how far
 ## along a revive is and when somebody is up (game/revive.gd). 6 is the sealed
 ## door: every door is in the room's snapshot carrying whether the host's room
-## is beaten, because a guest's cannot tell (game/levels/door_lock.gd).
-const WIRE := 6
+## is beaten, because a guest's cannot tell (game/levels/door_lock.gd). 7 is who
+## plays whom: the host may seat a guest on a character it did not ask for, and
+## a guest may ask for another while waiting (`_want`).
+const WIRE := 7
 ## Ours (server/README.md). The live service is what a RELEASE talks to; dev's
 ## own copy is what dev builds and the editor talk to - see signaling_url().
 const LIVE_SIGNALING := "wss://za-company.mayar-deeb.dev"
@@ -122,13 +136,16 @@ var state := State.OFFLINE
 ## only so tests/test_net.gd can be a build that speaks another one.
 var wire := WIRE
 
-## peer id -> {peer, name, character, route, ping}. The host's is the truth and
-## a guest's is the last copy it was sent.
+## peer id -> {peer, name, character, route, ping}, and `taken` - the character
+## a guest asked for and somebody else plays - until that guest chooses. The
+## host's is the truth and a guest's is the last copy it was sent.
 var _rows := {}
 ## The ids in the order they came, the host's first: the party's order. Kept
 ## apart from the ids themselves because ENet's are random.
 var _order: Array[int] = []
-var _me := {"name": "", "character": ""}
+## The character this machine asked to play: what its hello says, and the
+## host's own row.
+var _pick := ""
 var _code := ""
 var _signal: SignalClient = null
 var _mp: MultiplayerPeer = null
@@ -228,6 +245,23 @@ func is_public() -> bool:
 	return is_host() and _public
 
 
+## What a player is called: their character's name - see *Who plays whom*.
+static func name_of(character: String) -> String:
+	return _clean_name(String(Roster.find(character).get("name", "")))
+
+
+## A guest: the next character round the cast from the one it plays, `step`
+## (1 or -1) at a time, that nobody else in the party does - what its seat's
+## arrows offer. "" while it plays nothing yet.
+func next_free(step: int) -> String:
+	var mine: Dictionary = _rows.get(my_id(), {})
+	var current := String(mine.get("character", ""))
+	if current == "":
+		return ""
+	var ids := _cast()
+	return _first_free(ids[posmod(ids.find(current) + step, ids.size())], step, _held(my_id()))
+
+
 ## Minutes from UTC by this machine's own clock - what a listed room says
 ## about where it is, and what the list is sorted nearest to.
 static func zone_minutes() -> int:
@@ -284,40 +318,39 @@ static func signaling_url() -> String:
 ## Open a room on the signaling service. `hosted` comes with its code.
 ## `public` lets the list join it without the code - the host's to choose, so
 ## it has no default here.
-func host(player_name: String, character: String, public: bool) -> void:
-	if not _begin(player_name, character):
+func host(character: String, public: bool) -> void:
+	if not _begin(character):
 		return
 	_public = public
 	_open_signaling()
-	_signal.send({"op": "host", "v": PROTOCOL, "name": player_name, "max": Heads.MAX_PARTY,
+	_signal.send({"op": "host", "v": PROTOCOL, "name": name_of(character), "max": Heads.MAX_PARTY,
 		"public": public, "wire": wire, "zone": zone_minutes(), "character": character})
 
 
 ## Join the room with this code. `joined` once the host has us, `failed` if it
 ## never does. `force_relay` skips the direct attempt - the relay, on purpose.
-func join(room_code: String, player_name: String, character: String,
-		force_relay := false) -> void:
-	if not _begin(player_name, character):
+func join(room_code: String, character: String, force_relay := false) -> void:
+	if not _begin(character):
 		return
 	_force_relay = force_relay
 	_open_signaling()
-	_signal.send({"op": "join", "v": PROTOCOL, "name": player_name,
+	_signal.send({"op": "join", "v": PROTOCOL, "name": name_of(character),
 		"code": room_code.strip_edges().to_upper()})
 
 
 ## Join a row of the list by its `id`. A private room wants its `room_code`
 ## too, and is refused with `wrong_code` without it; a public one ignores it.
-func join_listed(room_id: String, room_code: String, player_name: String, character: String) -> void:
-	if not _begin(player_name, character):
+func join_listed(room_id: String, room_code: String, character: String) -> void:
+	if not _begin(character):
 		return
 	_open_signaling()
-	_signal.send({"op": "join", "v": PROTOCOL, "name": player_name, "room": room_id,
+	_signal.send({"op": "join", "v": PROTOCOL, "name": name_of(character), "room": room_id,
 		"code": room_code.strip_edges().to_upper()})
 
 
 ## Host on a port with ENet: no signaling, no code, no relay.
-func host_local(port: int, player_name: String, character: String) -> Error:
-	if not _begin(player_name, character):
+func host_local(port: int, character: String) -> Error:
+	if not _begin(character):
 		return ERR_ALREADY_IN_USE
 	var enet := ENetMultiplayerPeer.new()
 	var err := enet.create_server(port, Heads.MAX_PARTY - 1)
@@ -331,8 +364,8 @@ func host_local(port: int, player_name: String, character: String) -> Error:
 	return OK
 
 
-func join_local(address: String, port: int, player_name: String, character: String) -> Error:
-	if not _begin(player_name, character):
+func join_local(address: String, port: int, character: String) -> Error:
+	if not _begin(character):
 		return ERR_ALREADY_IN_USE
 	var enet := ENetMultiplayerPeer.new()
 	var err := enet.create_client(address, port)
@@ -383,6 +416,16 @@ func set_public(on: bool) -> void:
 	_public = on
 	if _signal != null:
 		_signal.send({"op": "public", "on": on})
+
+
+## A guest waiting in the lobby: play `character` instead. The host's to grant,
+## being the one who knows who plays what, so this machine's seat changes when
+## the roster comes back - and a character somebody took meanwhile is simply
+## never granted. The host keeps the character the list of games shows.
+func choose(character: String) -> void:
+	if state != State.LOBBY or is_host() or _mp == null:
+		return
+	_want.rpc_id(1, character)
 
 
 ## The host only, in the lobby: a guest out of the party. Online the signaling
@@ -456,8 +499,11 @@ func _arrived_at_host() -> void:
 
 
 ## A guest's first word once connected: which game it speaks and who it is.
+## The name it carries is no longer read - everybody is called after their
+## character - but stays, because this is the call that refuses an older build
+## with `version`, and it can only refuse one whose hello it can still read.
 @rpc("any_peer", "call_remote", "reliable")
-func _hello(their_wire: int, player_name: String, character: String, route: String) -> void:
+func _hello(their_wire: int, _player_name: String, character: String, route: String) -> void:
 	if not is_host():
 		return
 	var id := multiplayer.get_remote_sender_id()
@@ -470,8 +516,15 @@ func _hello(their_wire: int, player_name: String, character: String, route: Stri
 	var row: Dictionary = _rows.get(id, {"peer": id, "ping": -1})
 	if not _order.has(id):
 		_order.append(id)
-	row["name"] = _clean_name(player_name)
-	row["character"] = character
+	# Seated whatever they asked for: on it if nobody plays it, on the next free
+	# one round the cast if somebody does - see *Who plays whom*.
+	var given := _first_free(character, 1, _held(id))
+	row["character"] = given
+	row["name"] = name_of(given)
+	if given != character and not Roster.find(character).is_empty():
+		row["taken"] = character
+	else:
+		row.erase("taken")
 	# The host's own link knows the route; a local guest says LAN.
 	if not row.has("route") or row["route"] == "...":
 		row["route"] = route
@@ -506,6 +559,30 @@ func _refused(reason: String) -> void:
 func _begin_run(rows: Array) -> void:
 	state = State.IN_RUN
 	run_started.emit(rows)
+
+
+## A guest asking to play another character (`choose()`): granted only while
+## waiting, only to somebody already in the party, and only when nobody else
+## plays it - otherwise not a word, and their seat simply stays as it was.
+##
+## Named to sort after every older call here: Godot numbers a node's RPCs in
+## the order of their names, so one sorting earlier would renumber `_hello` and
+## `_refused`, and an older build's hello would no longer reach the method that
+## refuses it.
+@rpc("any_peer", "call_remote", "reliable")
+func _want(character: String) -> void:
+	if not is_host() or state != State.LOBBY:
+		return
+	var id := multiplayer.get_remote_sender_id()
+	var row: Dictionary = _rows.get(id, {})
+	if String(row.get("character", "")) == "" or Roster.find(character).is_empty() \
+			or _held(id).has(character):
+		return
+	row["character"] = character
+	row["name"] = name_of(character)
+	row.erase("taken")
+	roster_changed.emit()
+	_broadcast()
 
 
 ## The roster to everybody in it - not to everybody on the line, which a guest
@@ -547,7 +624,7 @@ func _on_connected_to_server() -> void:
 		var link: RtcLink = _links.get(1)
 		route = link.route if link != null else ""
 	_ping.call("watch", 1)
-	_hello.rpc_id(1, wire, _me["name"], _me["character"], route)
+	_hello.rpc_id(1, wire, name_of(_pick), _pick, route)
 
 
 func _on_connection_failed() -> void:
@@ -654,11 +731,11 @@ func _on_link_failed(_reason: String, peer_id: int) -> void:
 # --- plumbing ---------------------------------------------------------------------
 
 
-func _begin(player_name: String, character: String) -> bool:
+func _begin(character: String) -> bool:
 	if state != State.OFFLINE:
 		push_warning("Net: already in a party - leave() first")
 		return false
-	_me = {"name": _clean_name(player_name), "character": character}
+	_pick = character
 	state = State.OPENING
 	return true
 
@@ -669,7 +746,7 @@ func _set_peer(peer: MultiplayerPeer) -> void:
 
 
 func _open_lobby(route: String) -> void:
-	_rows[1] = {"peer": 1, "name": _me["name"], "character": _me["character"],
+	_rows[1] = {"peer": 1, "name": name_of(_pick), "character": _pick,
 		"route": route, "ping": 0}
 	_order = [1]
 	state = State.LOBBY
@@ -739,6 +816,35 @@ func _reset() -> void:
 	_clock = 0.0
 	state = State.OFFLINE
 	roster_changed.emit()
+
+
+## The characters somebody in the party plays, `id` aside. Only who has said
+## hello plays one - somebody still connecting has none yet - so of two who ask
+## for the same character, whoever's hello lands second is moved on.
+func _held(id: int) -> Dictionary:
+	var held := {}
+	for other: int in _rows:
+		var character := String((_rows[other] as Dictionary).get("character", ""))
+		if other != id and character != "":
+			held[character] = true
+	return held
+
+
+## Round the cast from `from` - itself first - `step` at a time, to the first
+## character not `held`; from the top for a character the cast does not have.
+## Ten in the cast and four seats, so there always is one.
+static func _first_free(from: String, step: int, held: Dictionary) -> String:
+	var ids := _cast()
+	var at := maxi(ids.find(from), 0)
+	for i in ids.size():
+		var candidate: String = ids[posmod(at + i * step, ids.size())]
+		if not held.has(candidate):
+			return candidate
+	return from
+
+
+static func _cast() -> Array:
+	return Roster.CHARACTERS.map(func(entry: Dictionary) -> String: return entry["id"])
 
 
 ## The signaling service's rule, applied on the wire's other road too: a local

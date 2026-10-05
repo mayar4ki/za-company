@@ -149,8 +149,9 @@ recipe and a free re-run.
 
 `autoload/net.gd` (`Net`) is online co-op's one door to the network
 (DESIGN.md's Multiplayer, M2): host a room, join one by its code, leave, and
-keep the party's ROSTER - peer, name, character, route, ping - until the host
-starts the run. It is the ONE place the transport is chosen: online is WebRTC
+keep the party's ROSTER - peer, name, character, route, ping, and `taken` while
+a guest sits on a character they did not ask for - until the host starts the
+run. It is the ONE place the transport is chosen: online is WebRTC
 introduced through our signaling service, with the spike's three pieces under
 `autoload/net/` (`signal_client.gd`, `rtc_link.gd` - direct first, relay as
 the fallback, and which one it got - and `ping.gd`, the host's own heartbeat);
@@ -158,7 +159,7 @@ the fallback, and which one it got - and `ping.gd`, the host's own heartbeat);
 MultiplayerAPI with none of the internet in it and what the suites run on;
 offline is Godot's OfflineMultiplayerPeer, a host with no guests.
 
-Five things are load-bearing:
+Seven things are load-bearing:
 
 - **The host is the truth.** A guest is in the party once the host has its
   hello, and the host sends the whole roster to everybody IN it on every
@@ -167,6 +168,25 @@ Five things are load-bearing:
   The hello carries `WIRE`, the game's
   own protocol: two builds that do not speak the same game are refused with
   `version`, the way the signaling service refuses another `PROTOCOL`.
+- **The refusal only works while an older build can still be READ.** Godot
+  numbers a node's RPCs in the order of their names, so a new `@rpc` that
+  sorts before an old one renumbers it, and an older build's `_hello` lands on
+  some other method and is never refused - it just hangs. So `_hello` and
+  `_refused` keep their exact signatures forever (the hello still carries a
+  name nobody reads), and a new RPC takes a name that sorts after every older
+  one (`_want`, after `_roster`). `test_net.gd`'s wrong-wire step is the same
+  build saying another number, so it cannot catch this: check it by reading.
+- **Who plays whom: nobody types a name.** A player is called what their
+  character is called (`name_of()`), and no two in a party play the same
+  character, so no two share a name. The host keeps it so in `_hello`: a guest
+  asking for a character somebody already plays is seated anyway, on the next
+  one round the cast nobody does (`_first_free()`), with what they asked for
+  on their row as `taken` - never refused. A guest may move to any free one
+  while waiting (`choose()`, granted by the host's `_want`, which clears
+  `taken`); a taken or unknown one is simply never granted. Only rows that
+  have said hello hold a character, so of two asking for the same one, the
+  second hello moves on. The host keeps its own, because the list of games
+  shows it.
 - **Joined in the lobby, never mid-run.** `start_run()` sends the signaling
   service `start`, which refuses every later `join` with `started`, and a
   hello after the start is refused with `started` too.

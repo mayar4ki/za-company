@@ -5,10 +5,10 @@ kept in step by game/sync/CLAUDE.md.
 
 **The way in is the main menu's HOST ONLINE and JOIN ONLINE**, under PLAY, as
 the Open Games preview drew it (https://claude.ai/artifact/PTQxvCxkJ1tkncGw2K6bbb):
-the same character select, told by its `next_scene` to go on to the lobby,
-which on that way only also asks YOUR NAME (Settings' `online` section) - then
-`ui/lobby/`, three screens on one scene, which `ui/lobby/opening.gd` says to
-open on. `lobby.gd` only routes - which screen is up, which one a refusal is
+the same character select, told by its `next_scene` to go on to the lobby -
+asking no name, because online you are called what your character is called
+(autoload/CLAUDE.md's *Net*, who plays whom) - then `ui/lobby/`, three screens
+on one scene, which `ui/lobby/opening.gd` says to open on. `lobby.gd` only routes - which screen is up, which one a refusal is
 said on, START into the run - and each screen is a script of its own:
 
 - **Join a game** (`join_view.gd`) is the list and NOTHING else: one row per
@@ -27,7 +27,16 @@ said on, START into the run - and each screen is a script of its own:
   in DESIGN.md's colours with the route under it, the relay warning, START,
   the host's ROOM: PUBLIC / PRIVATE switch between START and LEAVE, and KICK
   on every guest's seat - it asks once (KICK?) and goes on a second press
-  inside 3 s.
+  inside 3 s. **A guest's own seat has an arrow either side of the sprite**
+  instead, stepping to the next character nobody else plays: left and right
+  on the keyboard PRESS those arrows (`room_view.gd`'s `_input`, before the
+  focus sees the key - a guest's room has nothing beside LEAVE to move to),
+  so a key and a click are one path and sound the same. A guest seated on a
+  character they did not ask for, because somebody had it, is told so on the
+  waiting line ("REEM WAS TAKEN, SO YOU'RE ISMEEL - ARROWS TO CHANGE"). A
+  change made there is saved as the player's pick, the way the character
+  select saves one; the host has no arrows, since the list shows its
+  character.
 
 The lobby is a VIEW of Net and holds no party state; START is Net's `run_started`, and the lobby turns the
 rows into game.gd's `next_party`: this machine's member marked `local` on the

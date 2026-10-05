@@ -83,9 +83,10 @@ func _host_board() -> void:
 
 func _host_board_down() -> void:
 	var words := _board_words()
-	_check("board: a row for each of the party, by name (%s)" % [words],
-		words.has("MAYAR") and words.has("IVO"))
-	_check("board: this machine's row marked YOU", words.has("REEM  - YOU"))
+	_check("board: a row for each of the party, by name - their characters' (%s)" % [words],
+		words.has("REEM") and words.has("ANAS"))
+	_check("board: this machine's row marked YOU, and only it",
+		words.count("YOU") == 1 and words.find("YOU") == words.find("REEM") + 1)
 	_check("board: the host's row says HOST, the relayed guest's RELAY",
 		words.has("HOST") and words.has("RELAY"))
 	_key(KEY_TAB, false)
@@ -97,8 +98,9 @@ func _guest_board() -> void:
 	_tell("key", [KEY_TAB, true])
 	_expect("board: up on the guest while ITS Tab is held, with its own row YOU",
 		"screen", [], func(a: Array) -> bool:
-			return a.size() == 4 and a[2] == true and (a[3] as Array).has("ANAS  - YOU") \
-				and (a[3] as Array).has("MAYAR"))
+			var seen: Array = a[3] if a.size() == 4 else []
+			return a.size() == 4 and a[2] == true and seen.count("YOU") == 1 \
+				and seen.find("YOU") == seen.find("ANAS") + 1 and seen.has("REEM"))
 	_check("board: the guest's Tab is not the host's", current_scene.call("scoreboard_up") == false)
 
 
@@ -112,4 +114,4 @@ func _guest_leaves() -> void:
 	_tell("quit")
 	_deadline = 600
 	_wait("left: the guest quitting is said across the host's screen",
-		func() -> bool: return _hud().call("notice_text") == "IVO LEFT THE GAME")
+		func() -> bool: return _hud().call("notice_text") == "ANAS LEFT THE GAME")

@@ -380,8 +380,13 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
   - `test_net.gd` - the `Net` autoload: a host and its guests in ONE process,
     each Net in a SubViewport with a MultiplayerAPI of its own, over ENet on
     localhost. Hosting opens a party of one; a guest's hello puts them in it,
-    with both ends holding the same roster in the same order (name cleaned,
-    character, route) and a ping the host measured reaching the guest; a build
+    with both ends holding the same roster in the same order (character, the
+    name it gives them, route) and a ping the host measured reaching the
+    guest; who plays whom - a third asking for the host's character still let
+    in, seated on the next free one round the cast and told what was taken,
+    its arrows offering the free ones either way, a move to a free one
+    granted and clearing `taken`, while a taken character, an unknown one and
+    anything the host asks for are never granted; a build
     on another `wire` is refused with `version` and the party never had it;
     START reaches everybody with the same rows; a late arrival is refused with
     `started`; the host leaving is `host_left` at the guest and a guest leaving
@@ -399,7 +404,7 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     cannot count on WebRTC finding a route.
   - `test_lobby.gd` - the way into online play through the real screens:
     HOST ONLINE and JOIN ONLINE under PLAY in the four-button height; the
-    character select asking the name on the way online; the list of games -
+    character select asking NO name on the way online; the list of games -
     looking before any answer, the order, every status, the line under it for
     an open, full and started game, the picked game staying picked as the list
     moves and the focus going where a vanished one was; a private game's code
@@ -416,10 +421,16 @@ out are the root CLAUDE.md's *Testing*. This is the rest.
     and free to come back on a LAN; the relay line, the code, the join link,
     C copying it, the PUBLIC switch and its line; and START putting the party
     into the game - this machine's body as its own pick, the guest's as
-    theirs on still hands, their HUD row by the name they typed - and the
+    theirs on still hands, their HUD row by their character's name - and the
     party ending: the run frozen under the host-left panel naming whoever
     hosted, Escape doing nothing to it and opening no pause menu, and its
-    MAIN MENU the way back to a menu that has left the party. Nothing in
+    MAIN MENU the way back to a menu that has left the party. Then the room
+    from a GUEST's side, the SubViewport hosting on a port of its own: asking
+    for the host's character still seats this machine, on the next free one,
+    with the waiting line saying what was taken, arrows on its own seat only
+    and ARROWS in the keys; right is the next free one and saved as the pick,
+    a click on the left arrow steps back, left again steps over the host's
+    character, and Escape leaves for the list. Nothing in
     it reaches the internet: the list is handed to Net's `rooms_listed`, a
     join from the list is caught before it leaves, and a relay and a code are
     told to Net directly, which ENet has neither of.

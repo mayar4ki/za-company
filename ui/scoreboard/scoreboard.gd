@@ -1,7 +1,7 @@
 extends Control
 ## The scoreboard, held on Tab in an online run (DESIGN.md's *Ping, the
-## Counter-Strike way*): one row per player - who, as which character, their
-## ping to the host and the route they came by. Picked as option A ("Table")
+## Counter-Strike way*): one row per player - who, which is also which
+## character, their ping to the host and the route they came by. Picked as option A ("Table")
 ## from the Ping On Screen preview and built exactly as previewed: the pause
 ## menu's colours in a panel of its own, the room still visible around it.
 ##
@@ -60,8 +60,11 @@ func show_rows(rows: Array, me: int, code: String) -> void:
 		_portrait(character, Vector2(at.x + 10, y - 8))
 		_text(String(row.get("name", "")).to_upper(), Vector2(at.x + 46, y - 1),
 			ACCENT if mine else TEXT)
-		var who := String(Roster.find(character).get("name", "")).to_upper()
-		_text(who + ("  - YOU" if mine else ""), Vector2(at.x + 46, y + 12), DIM, 12)
+		# Under the name the preview put the character's, which is the same word
+		# now that a player is called after their character (net.gd's *Who
+		# plays whom*) - so only this machine's row says anything there.
+		if mine:
+			_text("YOU", Vector2(at.x + 46, y + 12), DIM, 12)
 		var route := String(row.get("route", ""))
 		if route == "HOST":
 			_text("-", Vector2(at.x + 176, y + 4), DIM, 16, HORIZONTAL_ALIGNMENT_RIGHT, 50)

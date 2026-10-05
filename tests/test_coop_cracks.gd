@@ -418,7 +418,7 @@ func _dropped() -> void:
 	_wait("drop: once the host gives up on the line, the body is gone, and said so",
 		func() -> bool:
 			return _second() == null and (current_scene.call("party") as Array).size() == 1 \
-				and current_scene.get_node("HUD/Hud").call("notice_text") == "IVO LEFT THE GAME")
+				and current_scene.get_node("HUD/Hud").call("notice_text") == "ANAS LEFT THE GAME")
 
 
 func _pool_kept() -> void:

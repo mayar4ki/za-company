@@ -10,6 +10,11 @@ extends Control
 ##   words under the row - and goes on a second press inside `ARM_SECONDS`;
 ##   the player is out, and online cannot come back to this room.
 ##
+## A guest gets the cast instead: arrows on their own seat, which left and
+## right on the keyboard press, step to the next character nobody else plays
+## (net.gd's *Who plays whom*). A guest seated on a character they did not ask
+## for, because somebody had it, is told so on the waiting line.
+##
 ## Everything here is drawn from Net, every time; nothing is kept but which
 ## KICK is asking.
 
@@ -48,6 +53,7 @@ func _ready() -> void:
 		var seat := Seat.new()
 		seat.name = "Seat%d" % (i + 1)
 		seat.kick_pressed.connect(_on_kick)
+		seat.choose_pressed.connect(_on_choose)
 		_seats.add_child(seat)
 	_start_button.pressed.connect(Net.start_run)
 	_public_button.pressed.connect(_on_public)
@@ -74,6 +80,21 @@ func _process(delta: float) -> void:
 		if _asking_left <= 0.0:
 			_asking = 0
 			refresh()
+
+
+## Left and right are a guest's arrows, taken before the focus can see them:
+## a guest's room has nothing else to the side of LEAVE, so they would move
+## nothing anyway.
+func _input(event: InputEvent) -> void:
+	if not visible or Net.state != Net.State.LOBBY or Net.is_host():
+		return
+	for step in [-1, 1]:
+		if event.is_action_pressed("ui_left" if step < 0 else "ui_right"):
+			get_viewport().set_input_as_handled()
+			var seat := _my_seat()
+			if seat != null and seat.arrow(step).visible:
+				# Pressed rather than called, so the keyboard sounds like a click.
+				seat.arrow(step).pressed.emit()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -109,11 +130,14 @@ func refresh() -> void:
 		_link.text = "JOIN LINK  %s   C COPY" % link if link != "" else ""
 		_link.add_theme_color_override(&"font_color", DIM)
 	var asking_name := ""
+	var mine := {}
 	for i in _seats.get_child_count():
 		var seat: Seat = _seats.get_child(i)
 		if i < rows.size():
 			var peer := int(rows[i]["peer"])
-			seat.show_row(rows[i], peer == me, host and peer != me)
+			if peer == me:
+				mine = rows[i]
+			seat.show_row(rows[i], peer == me, host and peer != me, not host and peer == me)
 			seat.arm(peer == _asking)
 			if peer == _asking:
 				asking_name = String(rows[i].get("name", "")).to_upper()
@@ -127,7 +151,11 @@ func refresh() -> void:
 	else:
 		_say(_relay_line, _relay_text(rows, me, host), MID)
 
-	if not host:
+	var taken := String(mine.get("taken", ""))
+	if not host and taken != "":
+		_say(_wait_line, "%s WAS TAKEN, SO YOU'RE %s - ARROWS TO CHANGE"
+			% [Net.name_of(taken).to_upper(), String(mine.get("name", "")).to_upper()], MID)
+	elif not host:
 		var host_name := String(rows[0]["name"]).to_upper() if not rows.is_empty() else "THE HOST"
 		_say(_wait_line, "WAITING FOR %s TO START" % host_name, ACCENT)
 	elif code == "":
@@ -143,6 +171,8 @@ func refresh() -> void:
 	var keys: Array[String] = []
 	if host:
 		keys.append("ENTER START")
+	elif String(mine.get("character", "")) != "":
+		keys.append("ARROWS CHANGE CHARACTER")
 	if link != "":
 		keys.append("C COPY LINK")
 	keys.append("ESC LEAVE")
@@ -152,6 +182,14 @@ func refresh() -> void:
 ## Read by tests.
 func seats() -> Array:
 	return _seats.get_children()
+
+
+func _my_seat() -> Seat:
+	var me := Net.my_id()
+	for seat: Seat in _seats.get_children():
+		if seat.peer == me and seat.kind == "player":
+			return seat
+	return null
 
 
 func _relay_text(rows: Array, me: int, host: bool) -> String:
@@ -176,6 +214,17 @@ func _on_kick(peer: int) -> void:
 		_asking = peer
 		_asking_left = ARM_SECONDS
 	refresh()
+
+
+## A guest's arrow: the next character round the cast that nobody else plays,
+## asked of the host, and kept as this player's pick the way the character
+## select keeps one.
+func _on_choose(step: int) -> void:
+	var character := Net.next_free(step)
+	if character == "":
+		return
+	Net.choose(character)
+	Settings.set_value(&"player", &"character", character)
 
 
 func _on_public() -> void:

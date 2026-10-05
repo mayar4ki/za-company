@@ -148,13 +148,15 @@ puts it up only when the run is online, so a solo HUD is what it always was.
 - **The scoreboard** (option A, the table): `ui/scoreboard/`, on its own
   CanvasLayer 7 and up only while the `scoreboard` action (Tab) is held, which
   setup_project.gd adds like every other key. One row per player - the
-  character's idle frame, name, character, ping and route - with this
-  machine's marked YOU. Dumb, like the HUD: game.gd hands it Net's roster.
+  character's idle frame, name, ping and route - with this machine's marked
+  YOU. The preview had the character's name under the player's; a player is
+  called after their character now (autoload/net.gd's *Who plays whom*), so
+  that line says only YOU, and only on this machine's row. Dumb, like the HUD: game.gd hands it Net's roster.
 - **The relay line**: a guest whose own row says RELAY as its run starts is
   told so across the top for five seconds (the HUD's `notice()`), in the
   lobby's words. The owner's call was the line and NOT a RELAY tag on the HUD
   rows; the scoreboard's route column is where anybody else sees it.
-- **Somebody leaving** (option A): the same strip says "IVO LEFT THE GAME"
+- **Somebody leaving** (option A): the same strip says "ANAS LEFT THE GAME"
   for three seconds, in the name their row called them, from `net_left()` on
   every machine still in the run.
 - **The host leaving** (option B, the panel): `ui/host_left/`, a panel on

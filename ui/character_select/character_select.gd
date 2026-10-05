@@ -4,10 +4,10 @@ extends Control
 ## a click to choose. The choice is saved through Settings so the next visit
 ## starts on the same character, then the game scene loads - or, while the
 ## development switch is on, the level select (ui/level_select/) does, and on
-## the way to online play the lobby does (`next_scene`). On that way, and only
-## then, it also asks your NAME: the lobby's list of games is all the join
-## screen holds, so this is where an online player says who they are - the
-## same screen that already asks which body.
+## the way to online play the lobby does (`next_scene`). It asks no name on
+## that way either: online you are called what your character is called, and
+## no two players in a room play the same one (autoload/net.gd's *Who plays
+## whom*).
 
 const GAME_SCENE := "res://game/game.tscn"
 const MENU_SCENE := "res://ui/main_menu/main_menu.tscn"
@@ -24,10 +24,6 @@ const Roster := preload("res://game/player/characters/roster.gd")
 ## Spent on use - or on backing out - like game.gd's `next_start`.
 static var next_scene := ""
 
-## Where the name lives: Settings' `online` section, which the lobby reads.
-const NAME_SECTION := &"online"
-const NAME_KEY := &"name"
-
 ## 32px frames drawn at a whole multiple, matching the game's pixel scale rules.
 const PORTRAIT_PX := 64
 const WALK_FPS := 8.0
@@ -36,9 +32,6 @@ const WALK_FPS := 8.0
 ## 774px, which is wider than the 640px viewport.
 @onready var _row: GridContainer = %Roster
 @onready var _back_button: Button = %BackButton
-@onready var _name_label: Label = %NameLabel
-@onready var _name_edit: LineEdit = %NameEdit
-@onready var _name_gap: Control = %NameGap
 @onready var _hint: Label = %Hint
 
 ## Button -> {"icon": TextureRect, "frames": SpriteFrames}
@@ -50,13 +43,6 @@ var _walk_frame := 0
 func _ready() -> void:
 	_back_button.pressed.connect(_go_back)
 	if _online():
-		for part: Control in [_name_label, _name_edit, _name_gap]:
-			part.visible = true
-		_name_edit.text = String(Settings.get_value(NAME_SECTION, NAME_KEY, "PLAYER"))
-		# Enter on the name goes back to the cast, so the next Enter picks.
-		_name_edit.text_submitted.connect(func(_text: String) -> void:
-			if _focused != null:
-				_focused.grab_focus())
 		_hint.text = "ARROWS SELECT   ENTER GO ONLINE   ESC BACK"
 
 	# The menu is already playing this; asking again is a no-op and keeps the
@@ -82,13 +68,6 @@ func _ready() -> void:
 	timer.autostart = true
 	timer.timeout.connect(_animate_focused)
 	add_child(timer)
-
-
-## Escape is taken here first while the name is being typed: the field is a
-## LineEdit, which keeps the key for itself.
-func _input(event: InputEvent) -> void:
-	if _name_edit.has_focus() and event.is_action_pressed("ui_cancel"):
-		_unhandled_input(event)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -149,9 +128,6 @@ static func _online() -> bool:
 
 func _choose(id: String) -> void:
 	Settings.set_value(&"player", &"character", id)
-	if _online():
-		var clean := _name_edit.text.strip_edges()
-		Settings.set_value(NAME_SECTION, NAME_KEY, clean if clean != "" else "PLAYER")
 	var next := next_scene
 	next_scene = ""
 	if next == "":

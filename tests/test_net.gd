@@ -7,6 +7,10 @@ extends "res://tests/helpers.gd"
 ## - The lobby: hosting opens a party of one, a guest's hello puts them in it,
 ##   and both ends hold the same roster in the same order - names, characters,
 ##   the guest's route - and the host measures a ping that reaches the guest.
+## - Who plays whom: everybody is called after their character, and a guest
+##   asking for one somebody already plays is seated anyway, on the next free
+##   one round the cast, its row saying what it asked for. It may move to any
+##   free one; a taken one is never granted, and the host keeps its own.
 ## - The refusals: a build speaking another WIRE is turned away with `version`
 ##   and the party is untouched; once the run has started a late arrival is
 ##   turned away with `started`.
@@ -34,6 +38,7 @@ const DEADLINE := 300
 var _net_script: GDScript
 var _host: Node
 var _guest: Node
+var _twin: Node
 var _late: Node
 var _heard := {}
 var _steps: Array[Callable] = []
@@ -46,7 +51,8 @@ var _since := 0
 func _tick(frame: int) -> void:
 	if frame == 2:
 		_net_script = load(NET)
-		_steps = [_host_one, _join_one, _ping_one, _wrong_wire, _start, _late_comer,
+		_steps = [_host_one, _join_one, _ping_one, _twin_joins, _twin_seated, _twin_held,
+			_twin_leaves, _wrong_wire, _start, _late_comer,
 			_host_leaves, _host_two, _public_switch, _kick, _kicked_out, _come_back,
 			_guest_leaves, _back_in, _host_unheard, _back_in, _guest_unheard,
 			_addresses]
@@ -116,11 +122,11 @@ func _heard_of(who: String, event: String) -> Variant:
 
 func _host_one() -> void:
 	_host = _spawn_net("HostView")
-	var err: int = _host.call("host_local", PORT, "Mayar", "reem")
+	var err: int = _host.call("host_local", PORT, "reem")
 	_check("host: ENet opens on localhost (%s)" % error_string(err), err == OK)
 	var rows: Array = _host.call("roster")
-	_check("host: a party of one, the host, HOST (%s)" % [rows],
-		rows.size() == 1 and rows[0]["name"] == "Mayar" and rows[0]["route"] == "HOST"
+	_check("host: a party of one, the host, HOST, called after its character (%s)" % [rows],
+		rows.size() == 1 and rows[0]["name"] == "Reem" and rows[0]["route"] == "HOST"
 			and rows[0]["character"] == "reem")
 	_check("host: in the lobby, and said so",
 		_host.get("state") == 2 and _heard_of("HostView", "hosted") != null)
@@ -128,7 +134,7 @@ func _host_one() -> void:
 
 func _join_one() -> void:
 	_guest = _spawn_net("GuestView")
-	_guest.call("join_local", "127.0.0.1", PORT, "Ivo\u0007", "anas")
+	_guest.call("join_local", "127.0.0.1", PORT, "anas")
 	_wait("join: the guest is in the party once the host has its hello",
 		func() -> bool: return _heard_of("GuestView", "joined") != null)
 
@@ -140,8 +146,9 @@ func _ping_one() -> void:
 		host_rows.size() == 2 and _ids(host_rows) == _ids(guest_rows)
 			and int(host_rows[0]["peer"]) == 1)
 	var row: Dictionary = host_rows[1] if host_rows.size() > 1 else {}
-	_check("roster: the guest's name (cleaned), character and route (%s)" % [row],
-		row.get("name") == "Ivo" and row.get("character") == "anas" and row.get("route") == "LAN")
+	_check("roster: the guest's character, its name, and its route (%s)" % [row],
+		row.get("name") == "Anas" and row.get("character") == "anas" and row.get("route") == "LAN"
+			and not row.has("taken"))
 	_check("roster: the guest is not the host",
 		_guest.call("is_host") == false and _host.call("is_host") == true)
 	_wait("ping: the host measures one, and the guest is sent it",
@@ -150,10 +157,58 @@ func _ping_one() -> void:
 			return mine.size() == 2 and int(mine[1]["ping"]) >= 0)
 
 
+## WHO PLAYS WHOM (net.gd's header): a third machine asks for the host's own
+## character, and is let in all the same - nobody is turned away for it.
+func _twin_joins() -> void:
+	_twin = _spawn_net("TwinView")
+	_twin.call("join_local", "127.0.0.1", PORT, "reem")
+	_wait("who: a guest asking for a character somebody plays is still let in",
+		func() -> bool: return _heard_of("TwinView", "joined") != null)
+
+
+func _twin_seated() -> void:
+	var row := _row(_host, int(_twin.call("my_id")))
+	_check("who: seated on the next one round the cast nobody plays, called after it (%s)" % [row],
+		row.get("character") == "ismeel" and row.get("name") == "Ismeel" and row.get("taken") == "reem")
+	_check("who: and its own copy of the roster says the same",
+		_row(_twin, int(_twin.call("my_id"))).get("taken") == "reem")
+	_check("who: no character twice in the party (%s)" % [_characters(_host)],
+		_characters(_host) == ["reem", "anas", "ismeel"])
+	_check("who: its arrows offer the free ones either way round, never a taken one (%s / %s)"
+		% [_twin.call("next_free", 1), _twin.call("next_free", -1)],
+		_twin.call("next_free", 1) == "abdul" and _twin.call("next_free", -1) == "hamza")
+	_twin.call("choose", "hamza")
+	_wait("who: it moves to a free one, and its row stops saying what was taken",
+		func() -> bool:
+			var mine := _row(_twin, int(_twin.call("my_id")))
+			return mine.get("character") == "hamza" and mine.get("name") == "Hamza" \
+				and not mine.has("taken"))
+
+
+## Asked, and never granted: a character the other guest plays, one the cast
+## does not have, and anything at all the host asks for, which keeps the one
+## the list of games shows.
+func _twin_held() -> void:
+	_twin.call("choose", "anas")
+	_twin.call("choose", "nobody")
+	_host.call("choose", "omar")
+	_wait("who: a taken character is never granted, nor an unknown one, nor the host's ask",
+		func() -> bool:
+			return _f - _since > 30 and _characters(_host) == ["reem", "anas", "hamza"] \
+				and _characters(_twin) == ["reem", "anas", "hamza"])
+
+
+func _twin_leaves() -> void:
+	_twin.call("leave")
+	_wait("who: and out again, leaving the party as it was",
+		func() -> bool: return (_host.call("roster") as Array).size() == 2)
+
+
 func _wrong_wire() -> void:
+	_drop_view(_twin)
 	_late = _spawn_net("WrongView")
 	_late.set("wire", 99)
-	_late.call("join_local", "127.0.0.1", PORT, "Old", "mayar")
+	_late.call("join_local", "127.0.0.1", PORT, "mayar")
 	_wait("wire: a build on another wire is refused with `version`",
 		func() -> bool: return (_heard_of("WrongView", "failed") == "version"
 			and _late.get("state") == 0))
@@ -175,7 +230,7 @@ func _late_comer() -> void:
 	_check("start: both are in the run",
 		_host.get("state") == 3 and _guest.get("state") == 3)
 	_late = _spawn_net("LateView")
-	_late.call("join_local", "127.0.0.1", PORT, "Late", "omar")
+	_late.call("join_local", "127.0.0.1", PORT, "omar")
 	_wait("start: a party is joined in the lobby - a late arrival is refused with `started`",
 		func() -> bool: return _heard_of("LateView", "failed") == "started")
 
@@ -191,8 +246,8 @@ func _host_leaves() -> void:
 func _host_two() -> void:
 	_check("leave: the host is offline again", _host.get("state") == 0)
 	_heard.clear()
-	_host.call("host_local", PORT_2, "Mayar", "reem")
-	_guest.call("join_local", "127.0.0.1", PORT_2, "Ivo", "anas")
+	_host.call("host_local", PORT_2, "reem")
+	_guest.call("join_local", "127.0.0.1", PORT_2, "anas")
 	_wait("again: a second party on the same two Nets",
 		func() -> bool: return _heard_of("GuestView", "joined") != null)
 
@@ -231,7 +286,7 @@ func _kicked_out() -> void:
 ## may come back; online the service refuses their address (its own suite).
 func _come_back() -> void:
 	_heard.erase("GuestView:joined")
-	_guest.call("join_local", "127.0.0.1", PORT_2, "Ivo", "anas")
+	_guest.call("join_local", "127.0.0.1", PORT_2, "anas")
 	_wait("kick: on a LAN they may come back",
 		func() -> bool: return _heard_of("GuestView", "joined") != null)
 
@@ -244,7 +299,7 @@ func _guest_leaves() -> void:
 
 func _back_in() -> void:
 	_heard.clear()
-	_guest.call("join_local", "127.0.0.1", PORT_2, "Ivo", "anas")
+	_guest.call("join_local", "127.0.0.1", PORT_2, "anas")
 	_wait("quiet: the guest joins the host's party again",
 		func() -> bool:
 			return _heard_of("GuestView", "joined") != null \
@@ -297,3 +352,15 @@ func _addresses() -> void:
 
 static func _ids(rows: Array) -> Array:
 	return rows.map(func(row) -> int: return int(row["peer"]))
+
+
+static func _row(net: Node, peer: int) -> Dictionary:
+	for row: Dictionary in net.call("roster"):
+		if int(row["peer"]) == peer:
+			return row
+	return {}
+
+
+## Who plays what, in the party's order.
+static func _characters(net: Node) -> Array:
+	return (net.call("roster") as Array).map(func(row) -> String: return row["character"])

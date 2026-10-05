@@ -647,7 +647,15 @@ on), OfflineMultiplayerPeer offline. The rules that hold all of it up:
   guest** (player.gd's `_world_reaches()`), which is what lets a guest run a
   room's effects for the look of them without any landing twice.
 - **Joined in the lobby, never mid-run**, and a build on another `WIRE` is
-  refused: two builds that do not speak the same game never meet.
+  refused: two builds that do not speak the same game never meet. That
+  refusal only reaches an older build while its hello still lands on
+  `_hello`: Godot numbers RPCs by NAME order, so never change `_hello`'s or
+  `_refused`'s signature, and name a new `@rpc` to sort after every old one.
+- **Nobody types a name, and no two play the same character**: a player is
+  called what their character is called, and the host seats a guest who asks
+  for a taken character on the next free one rather than refusing them; a
+  guest steps round the free ones with the arrows on their own seat. The
+  host keeps its own - the list of games shows it.
 - **Net changes no scene and spawns nothing**, and never reaches for the root
   MultiplayerAPI by name - which is what lets two of it live in one process
   (tests/test_net.gd).

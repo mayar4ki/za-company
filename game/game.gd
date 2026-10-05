@@ -274,8 +274,8 @@ func _spawn_party() -> void:
 		_players.append(body)
 		if i != mine:
 			_others.append(body)
-			# A player's own name online; the character's off it, where nobody
-			# chose one.
+			# The name Net gave them online - their character's, since nobody
+			# types one (net.gd's *Who plays whom*) - and the character's off it.
 			var shown := String(member.get("name", ""))
 			if shown == "":
 				shown = String(Roster.find(body.character).get("name", body.character))

@@ -38,7 +38,7 @@ func _initialize() -> void:
 func _process(_delta: float) -> bool:
 	_f += 1
 	if _f == 2:
-		root.get_node("/root/Net").call("join_local", "127.0.0.1", _port, "Ivo", "anas")
+		root.get_node("/root/Net").call("join_local", "127.0.0.1", _port, "anas")
 	if _f > LIFETIME_FRAMES:
 		quit(1)
 	return false

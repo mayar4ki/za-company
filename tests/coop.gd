@@ -158,7 +158,7 @@ func _hear_guest() -> void:
 
 
 func _open_room() -> void:
-	var err: int = _net().call("host_local", port, "Mayar", "reem")
+	var err: int = _net().call("host_local", port, "reem")
 	_check("host: a room on localhost (%s)" % error_string(err), err == OK)
 	change_scene_to_file(LOBBY)
 	_io = OS.execute_with_pipe(OS.get_executable_path(), ["--headless", "--path",

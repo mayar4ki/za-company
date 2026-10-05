@@ -1,9 +1,11 @@
 extends "res://tests/helpers.gd"
 ## The way into online play through the real screens, as the Open Games
 ## preview drew them: the main menu's HOST ONLINE and JOIN ONLINE, the
-## character select asking your name on the way, then the lobby's three
-## screens - the list of games, the host screen and the room - up to START
-## putting the party into the game.
+## character select on the way (asking no name: you are called after who you
+## play), then the lobby's three screens - the list of games, the host screen
+## and the room - up to START putting the party into the game. Then the room
+## from a GUEST's side: asking for the host's character, seated on the next
+## free one and told so, and the seat's arrows moving them round the cast.
 ##
 ## The lobby is a view of the `Net` autoload, so nothing here reaches the
 ## internet: the list of games is handed to Net's `rooms_listed` by the suite
@@ -16,6 +18,9 @@ extends "res://tests/helpers.gd"
 ## as long as it takes.
 
 const PORT := 47921
+## The guest's-eye room, hosted by the SubViewport: a port of its own, because
+## a closed ENet port is not always free again at once.
+const PORT_2 := 47922
 const DEADLINE := 300
 const NET := "res://autoload/net.gd"
 const LOBBY := "res://ui/lobby/lobby.tscn"
@@ -40,7 +45,8 @@ func _tick(frame: int) -> void:
 			_refusals, _back_to_select, _back_to_menu, _host_route, _host_screen, _host_back,
 			_host_again, _host_local, _hosted, _join,
 			_seated, _kick_ask, _kick_go, _rejoin, _relay_and_link, _public_switch, _start,
-			_in_game, _host_left_escape, _host_left_menu, _host_gone]
+			_in_game, _host_left_escape, _host_left_menu, _host_gone,
+			_guest_side, _guest_join, _guest_taken, _guest_back, _guest_skip, _guest_leaves]
 	if frame < 3:
 		return
 	if _waiting.is_valid():
@@ -133,12 +139,10 @@ func _menu() -> void:
 
 
 func _select() -> void:
-	var name_edit := _node("NameEdit") as LineEdit
-	_check("select: on the way online it asks your name (%s)" % name_edit.text,
-		name_edit.visible and name_edit.text == "PLAYER")
+	_check("select: it asks no name on the way online - you are called after who you play",
+		current_scene.get_node_or_null("%NameEdit") == null)
 	_check("select: and says where Enter goes (%s)" % _text("Hint"),
 		_text("Hint") == "ARROWS SELECT   ENTER GO ONLINE   ESC BACK")
-	name_edit.text = "Mayar"
 	(current_scene.get_node("%Roster/reem") as Button).pressed.emit()
 	_wait("select: picking somebody opens the list of games", _on(LOBBY))
 
@@ -147,8 +151,6 @@ func _join_screen() -> void:
 	_check("join: the list is up, the host screen and the room are not",
 		(_node("Join") as Control).visible and not (_node("Host") as Control).visible
 			and not (_node("Room") as Control).visible)
-	_check("join: the name typed on the way is kept",
-		_autoload("Settings").call("get_value", &"online", &"name", "") == "Mayar")
 	_check("join: before any answer it is looking (%s)" % _text("EmptyTitle"),
 		_text("EmptyTitle") == "LOOKING FOR GAMES..." and (_node("EmptyTitle") as Control).visible)
 	_check("join: with no games, BACK has the focus", (_node("JoinBack") as Button).has_focus())
@@ -266,7 +268,8 @@ func _back_to_select() -> void:
 	_key(KEY_ESCAPE, true)
 	_key(KEY_ESCAPE, false)
 	_wait("join: Escape backs out to the character select, still on its way online",
-		func() -> bool: return _on(SELECT).call() and (_node("NameEdit") as Control).visible)
+		func() -> bool: return _on(SELECT).call() \
+			and _text("Hint") == "ARROWS SELECT   ENTER GO ONLINE   ESC BACK")
 
 
 func _back_to_menu() -> void:
@@ -321,7 +324,7 @@ func _host_local() -> void:
 	difficulty.pressed.emit()
 	difficulty.pressed.emit()
 	_check("host: and round again to MEDIUM (%s)" % difficulty.text, difficulty.text == "DIFFICULTY: MEDIUM")
-	var err: int = _net().call("host_local", PORT, "Mayar", "reem")
+	var err: int = _net().call("host_local", PORT, "reem")
 	_check("host: the suite hosts on ENet the way OPEN THE ROOM would online (%s)" % error_string(err),
 		err == OK)
 	_wait("host: the lobby shows the room Net opened",
@@ -334,7 +337,7 @@ func _hosted() -> void:
 	var seats := _seats()
 	_check("room: one seat per MAX_PARTY (%d)" % seats.size(), seats.size() == 4)
 	_check("room: the host's own seat, theirs and marked HOST, with no KICK",
-		seats[0].get("kind") == "player" and _seat_text(seats[0], "Name") == "MAYAR"
+		seats[0].get("kind") == "player" and _seat_text(seats[0], "Name") == "REEM"
 			and _seat_text(seats[0], "Line1") == "HOST" and not seats[0].call("kick_button").visible)
 	_check("room: the rest are open",
 		seats.slice(1).all(func(s) -> bool: return s.get("kind") == "open"))
@@ -359,7 +362,7 @@ func _join() -> void:
 	_guest.connect("run_started", func(rows: Array) -> void: _guest_heard["run_started"] = rows)
 	_guest.connect("ended", func(reason: String) -> void: _guest_heard["ended"] = reason)
 	_guest.connect("failed", func(reason: String) -> void: _guest_heard["failed"] = reason)
-	_guest.call("join_local", "127.0.0.1", PORT, "Ivo", "anas")
+	_guest.call("join_local", "127.0.0.1", PORT, "anas")
 	_wait("join: the guest takes the second seat",
 		func() -> bool: return _seats()[1].get("kind") == "player")
 
@@ -367,7 +370,7 @@ func _join() -> void:
 func _seated() -> void:
 	var seat: Node = _seats()[1]
 	_check("seat: their name and their route (%s, %s)" % [_seat_text(seat, "Name"), _seat_text(seat, "Line2")],
-		_seat_text(seat, "Name") == "IVO" and _seat_text(seat, "Line2") == "LAN")
+		_seat_text(seat, "Name") == "ANAS" and _seat_text(seat, "Line2") == "LAN")
 	_check("seat: not this machine's, so it does not walk", seat.get("_mine") == false)
 	_check("seat: the host gets KICK on a guest's seat (%s)" % seat.call("kick_button").text,
 		seat.call("kick_button").visible and seat.call("kick_button").text == "KICK")
@@ -382,7 +385,7 @@ func _kick_ask() -> void:
 	_check("kick: the first press only asks (%s)" % kick.text,
 		kick.text == "KICK?" and (_net().call("roster") as Array).size() == 2)
 	_check("kick: and says what the second will do (%s)" % _text("RelayLine"),
-		_text("RelayLine") == "PRESS AGAIN TO KICK IVO - THEY CAN'T COME BACK TO THIS ROOM")
+		_text("RelayLine") == "PRESS AGAIN TO KICK ANAS - THEY CAN'T COME BACK TO THIS ROOM")
 
 
 func _kick_go() -> void:
@@ -397,7 +400,7 @@ func _kick_go() -> void:
 ## There is no signaling service on ENet to remember them by, so on a LAN they
 ## may come back; online the service refuses their address (its own suite).
 func _rejoin() -> void:
-	_guest.call("join_local", "127.0.0.1", PORT, "Ivo", "anas")
+	_guest.call("join_local", "127.0.0.1", PORT, "anas")
 	_wait("kick: on a LAN they may come back to the second seat",
 		func() -> bool: return _seats()[1].get("kind") == "player" and _seat_text(_seats()[1], "Line2") == "LAN")
 
@@ -411,7 +414,7 @@ func _relay_and_link() -> void:
 	_net().set("_code", "K7Q2PX")
 	_net().emit_signal("roster_changed")
 	_check("relay: the host is told who is on it (%s)" % _text("RelayLine"),
-		_text("RelayLine") == "! IVO IS ON THE RELAY - EXPECT A HIGHER PING")
+		_text("RelayLine") == "! ANAS IS ON THE RELAY - EXPECT A HIGHER PING")
 	_check("link: a room with a code shows it (%s)" % _text("RoomTitle"),
 		_text("RoomTitle") == "ROOM K7Q2PX")
 	_check("link: and its join link, with the key to copy it (%s)" % _text("Link"),
@@ -455,8 +458,8 @@ func _in_game() -> void:
 	_check("game: this machine's own body is its own to move",
 		_player().get("remote") == false and _player().get("peer") == 1)
 	var hud_rows: Array = current_scene.get_node("HUD/Hud").call("party_rows")
-	_check("game: the guest's HUD row carries the name they typed",
-		hud_rows.size() == 1 and (hud_rows[0].get_node("Name") as Label).text == "Ivo")
+	_check("game: the guest's HUD row carries their name, which is their character's",
+		hud_rows.size() == 1 and (hud_rows[0].get_node("Name") as Label).text == "Anas")
 	_check("game: the guest heard START too, with the same party",
 		_guest_heard.get("run_started") is Array and (_guest_heard["run_started"] as Array).size() == 2)
 	_check("game: the host's Net is in the run", _net().get("state") == 3)
@@ -467,7 +470,7 @@ func _in_game() -> void:
 	_wait("ended: the host leaving freezes the run under a panel saying so",
 		func() -> bool:
 			var panel := current_scene.get_node_or_null("HostLeft")
-			return panel != null and panel.call("line") == "MAYAR'S GAME HAS ENDED" \
+			return panel != null and panel.call("line") == "REEM'S GAME HAS ENDED" \
 				and paused and panel.call("main_menu_button").has_focus())
 
 
@@ -492,6 +495,66 @@ func _host_gone() -> void:
 	_check("menu: arriving home left the party", _net().get("state") == 0)
 	_wait("menu: and the guest was told the host left",
 		func() -> bool: return _guest_heard.get("ended") == "host_left")
+
+
+# --- the room from a guest's side --------------------------------------------------
+
+
+## The SubViewport's Net hosts this time, as reem, and this machine opens the
+## lobby to join it - asking for reem too.
+func _guest_side() -> void:
+	var err: int = _guest.call("host_local", PORT_2, "reem")
+	_check("guest side: the other Net hosts, as reem (%s)" % error_string(err), err == OK)
+	change_scene_to_file(LOBBY)
+	_wait("guest side: this machine opens the lobby", _on(LOBBY))
+
+
+func _guest_join() -> void:
+	_net().call("join_local", "127.0.0.1", PORT_2, "reem")
+	_wait("guest side: asking for the host's own character still gets a seat",
+		func() -> bool: return (_node("Room") as Control).visible \
+			and _seats()[1].get("kind") == "player")
+
+
+func _guest_taken() -> void:
+	var mine: Node = _seats()[1]
+	_check("taken: seated on the next free one round the cast, called after it (%s)"
+		% _seat_text(mine, "Name"), _seat_text(mine, "Name") == "ISMEEL" and mine.get("_mine") == true)
+	_check("taken: and told so on the waiting line (%s)" % _text("WaitLine"),
+		_text("WaitLine") == "REEM WAS TAKEN, SO YOU'RE ISMEEL - ARROWS TO CHANGE")
+	_check("taken: the arrows are on this guest's own seat and nobody else's",
+		mine.call("arrow", -1).visible and mine.call("arrow", 1).visible
+			and not _seats()[0].call("arrow", 1).visible)
+	_check("taken: the keys say what the arrows do (%s)" % _text("RoomHint"),
+		_text("RoomHint") == "ARROWS CHANGE CHARACTER    ESC LEAVE")
+	_key(KEY_RIGHT, true)
+	_key(KEY_RIGHT, false)
+	_wait("arrows: right is the next free one, granted, and the line goes back to waiting",
+		func() -> bool: return _seat_text(_seats()[1], "Name") == "ABDUL" \
+			and _text("WaitLine") == "WAITING FOR REEM TO START")
+
+
+func _guest_back() -> void:
+	_check("arrows: the pick is kept, the way the character select keeps one",
+		_autoload("Settings").call("get_value", &"player", &"character", "") == "abdul")
+	(_seats()[1].call("arrow", -1) as Button).pressed.emit()
+	_wait("arrows: a click on the left one steps back",
+		func() -> bool: return _seat_text(_seats()[1], "Name") == "ISMEEL")
+
+
+func _guest_skip() -> void:
+	_key(KEY_LEFT, true)
+	_key(KEY_LEFT, false)
+	_wait("arrows: and further left steps over the host's character to the next free one",
+		func() -> bool: return _seat_text(_seats()[1], "Name") == "HAMZA")
+
+
+func _guest_leaves() -> void:
+	_key(KEY_ESCAPE, true)
+	_key(KEY_ESCAPE, false)
+	_wait("guest side: Escape leaves the room for the list, and the host's party is one again",
+		func() -> bool: return (_node("Join") as Control).visible \
+			and (_guest.call("roster") as Array).size() == 1)
 
 
 func _seats() -> Array:

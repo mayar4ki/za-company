@@ -946,8 +946,8 @@ one that FEELS best rather than the one that is safest.
 
 ### Ping, the Counter-Strike way
 
-- **Hold Tab for the scoreboard**: one row per player — name, character, ping in
-  ms, and the route (HOST / DIRECT / RELAY). A new `scoreboard` action, added in
+- **Hold Tab for the scoreboard**: one row per player — name (which is the
+  character's), ping in ms, and the route (HOST / DIRECT / RELAY). A new `scoreboard` action, added in
   tools/setup_project.gd like every other key.
 - **Your own ping sits in a corner** for the whole online run, green under
   60 ms, amber under 120, red above.
@@ -956,9 +956,14 @@ one that FEELS best rather than the one that is safest.
   channel, keeps a rolling average, and sends the table round. Every number is
   a player's distance to the HOST, exactly as Counter-Strike shows distance to
   the server; the host's row reads HOST.
-- The player NAME is asked on the character select, on the way online only,
-  saved under Settings section `online` — not on the settings panel, whose
-  fourth row went to the difficulty.
+- **Nobody types a name** (2026-10-05, replacing the name box the character
+  select used to show on the way online): a player is called what their
+  character is called, and no two in a party play the same character - so no
+  two go by the same name either. A guest asking for a character somebody
+  already plays is never turned away: they are seated on the next free one,
+  told so in the room, and step round the free ones with the arrows on their
+  own seat while waiting. The host keeps the one it opened the room with,
+  because that is the one the list of games shows.
 
 ### Rules that keep it honest
 
